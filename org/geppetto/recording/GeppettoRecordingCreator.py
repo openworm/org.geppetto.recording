@@ -113,7 +113,7 @@ class GeppettoRecordingCreator:
                 #else create it
                 else:
                     node = node.create_group(path_node)
-            #at this stage node will have the life for our path, we can go ahead and add the data
+            #at this stage node will have the leaf for our path, we can go ahead and add the data
             print node
             values_array = np.array(self.values.get(path_string))
             dataset = node.create_dataset('values', (values_array.size,), dtype=self.data_types[path_string],
