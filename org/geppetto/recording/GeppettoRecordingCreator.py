@@ -66,8 +66,6 @@ class GeppettoRecordingCreator:
         if path_string not in self.values.keys():
             self.values[path_string] = []
         if isinstance(value, list):
-            if meta_type == MetaType.PARAMETER:
-                raise Exception('A list has been specified while a parameter should have only one value')
             self.values.get(path_string).extend(value)
         else:
             self.values.get(path_string).append(value)

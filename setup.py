@@ -6,7 +6,7 @@ setup(
     packages=['org', 'org.geppetto', 'org.geppetto.recording', 'org.geppetto.recording.lems',
               'org.geppetto.recording.nest', 'org.geppetto.recording.brian', 'org.geppetto.recording.neuron',
               'org.geppetto.recording.sibernetic'],
-    requires=['h5py', 'numpy'],
+    requires=['h5py', 'numpy', 'enum'],
     url='http:\\geppetto.org',
     license='MIT',
     author='matteocantarelli',
