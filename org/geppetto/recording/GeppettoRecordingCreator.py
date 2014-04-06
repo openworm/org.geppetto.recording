@@ -110,14 +110,21 @@ class GeppettoRecordingCreator:
                     node = node.get(path_node)
                 #else create it
                 else:
-                    node = node.create_group(path_node)
+                    if path_node == path[-1]:
+                        #this is the leaf create a dataset to store the values
+                        values_array = np.array(self.values.get(path_string))
+                        dataset = node.create_dataset(path_node, (values_array.size,),
+                                                      dtype=self.data_types[path_string], data=values_array)
+                        dataset.attrs['unit'] = self.units.get(path_string)
+                        dataset.attrs['meta_type'] = self.meta_types.get(path_string).key
+                    else:
+                        if type(node) is h5py.Dataset:
+                            raise Exception('A previous leaf is now referred to as a type')
+                        else:
+                            node = node.create_group(path_node)
             #at this stage node will have the leaf for our path, we can go ahead and add the data
             print node
-            values_array = np.array(self.values.get(path_string))
-            dataset = node.create_dataset('values', (values_array.size,), dtype=self.data_types[path_string],
-                                          data=values_array)
-            dataset.attrs['unit'] = self.units.get(path_string)
-            dataset.attrs['meta_type'] = self.meta_types.get(path_string).key
+
 
     def create(self):
         if not self.time:
