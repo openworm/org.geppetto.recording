@@ -21,6 +21,7 @@ class GeppettoRecordingCreator:
      to generate a vector with values for time.
     The values provided with the method add_value will be associated with the corresponding time step at the same index
      in the time vector.
+    Additionally, global metadata of various types can be added through add_metadata.
     Once all the values have been added and the time vector generated it is possible to create the recording
      by calling create().
 
@@ -42,7 +43,10 @@ class GeppettoRecordingCreator:
     creator.add_value('a.b.c.d', [1, 2, 3, 4, 5, 6], 'float_', 'mV', MetaType.STATE_VARIABLE)
     creator.add_value('a.b', 2, 'float_', 'mV', MetaType.STATE_VARIABLE)
     creator.add_fixed_time_step_vector(1, 'ms')
-    creator.close()
+    creator.add_metadata('string_metadata', 'description or link')
+    creator.add_metadata('float_metadata', 1.0)
+    creator.add_metadata('boolean_metadata', True)
+    creator.create()
     """
     def __init__(self, filename, simulator='Not specified'):
         self.f = h5py.File(filename, 'a')
@@ -53,6 +57,7 @@ class GeppettoRecordingCreator:
         self.time = None
         self.time_unit = None
         self.simulator = simulator
+        self.metadata = {}
 
     def add_value(self, path_string, value, data_type, unit, meta_type):
         if not unit:
@@ -99,6 +104,8 @@ class GeppettoRecordingCreator:
 
     def __process_added_values(self):
         self.f.attrs['simulator'] = self.simulator
+        for name, value in self.metadata.iteritems():
+            self.f.attrs[name] = value
         time_data_set = self.f.create_dataset('time', (len(self.time),), dtype='float_', data=self.time)
         time_data_set.attrs['unit'] = self.time_unit
         for path_string in self.values.keys():
@@ -125,6 +132,12 @@ class GeppettoRecordingCreator:
             #at this stage node will have the leaf for our path, we can go ahead and add the data
             print node
 
+    def add_metadata(self, name, value):
+        if not name:
+            raise Exception('Supply a name and be a good boy')
+        if not value:
+            raise Exception('Supply a value and be a good boy')
+        self.metadata[name] = value
 
     def create(self):
         if not self.time:
