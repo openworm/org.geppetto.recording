@@ -144,8 +144,99 @@ class GeppettoRecordingCreator:
         self.metadata[name] = value
 
     def create(self):
-        if not self.time:
+        if self.time is None:  # can be a numpy array, in this case `if not self.time` will raise an error
             raise Exception('Time step vector is not defined, '
                             'call add_fixed_time_step_vector or add_variable_time_step_vector')
         self.__process_added_values()
         self.f.close()
+
+    def add_recording_from_neuron(self, recording_file, variable_unit='mV', path_string=None):
+        """
+        Read a file that contains a recording from the NEURON simulator and add its contents to the current recording.
+        The file can be created using NEURON's Graph and Vector GUI.
+
+        Keyword arguments:
+        recording_file -- path to the file that should be added
+        """
+        with open(recording_file, 'r') as r:
+            lines = r.read().splitlines()
+            r.close()
+
+            # Extract label
+            if path_string is None:
+
+                path_string = lines[0][6:]
+                # Replace NEURON's location indices like v(.5) by segmentAt0_5.v
+                left_bracket = path_string.rfind('(')
+                if left_bracket != -1:
+                    right_bracket = path_string.find(')', left_bracket)
+                    location = path_string[left_bracket+1:right_bracket]
+                    if location.startswith('.'):
+                        location = '0' + location
+                    point_before_left_bracket = max(0, path_string.rfind('.', 0, left_bracket)+1)
+                    # TODO: Think about alternatives for the segment name
+                    path_string = path_string[:point_before_left_bracket] + 'segmentAt' + location.replace('.', '_') + '.' + path_string[point_before_left_bracket:left_bracket] + path_string[right_bracket+1:]
+
+            # Extract time and variable data points
+            num_steps = int(lines[1])
+            times = np.empty(num_steps)
+            values = np.empty(num_steps)
+            for i, line in enumerate(lines[2:]):
+                next_time, next_value = line.split()
+                times[i] = next_time
+                values[i] = next_value
+
+            # Add everything to HDF5
+            # TODO: Extract unit depending on variable name or at least give warning if they don't match
+            self.add_value(path_string, values, 'float_', variable_unit, MetaType.STATE_VARIABLE)
+            if self.time is None:
+                self.add_variable_time_step_vector(times, 'ms')
+            else:
+                if not np.all(self.time == times):
+                    raise ValueError('The file \"{0}\" contains a different time step vector than the one already definded'.format(recording_file))
+
+
+
+
+    def add_recording_from_brian(self, recording_file, path_string_prefix=''):
+        """
+        Read a file that contains a recording from the brian simulator and add its contents to the current recording.
+        The file can be created using brian's FileSpikeMonitor or AERSpikeMonitor.
+
+        Keyword arguments:
+        recording_file -- path to the file that should be added
+        """
+        with open(recording_file, 'r') as r:
+            file_content = r.read()
+            r.close()
+
+            # TODO: Add exceptions if file can not be parsed
+            if file_content.find('AER-DAT') == -1:  # txt format (recorded with brian.FileSpikeMonitor)
+                lines = file_content.splitlines()
+                # Extract indices and spike times similar to brian.load_aer() below
+                indices = np.empty(len(lines), dtype='int')
+                times = np.empty(len(lines))
+                for i, line in enumerate(lines):
+                    colon = line.find(',')
+                    indices[i] = int(line[:colon])
+                    times[i] = float(line[colon+2:])
+            else:  # AER format (recorded with brian.AERSpikeMonitor)
+                try:
+                    indices, times = brian.load_aer(recording_file)
+                except Exception:
+                    raise ValueError('The file \"{0}\" looks like an AER file but cannot be read'.format(recording_file))
+
+            spikes = {}
+            for index, time in zip(indices, times):
+                str_index = str(index)
+                if not str_index in spikes:
+                    spikes[str_index] = []
+                spikes[str_index].append(time)
+
+            for index, spike_list in spikes.items():
+                # TODO: Think about alternative naming for neuron
+                path_string = path_string_prefix + 'neuron' + str(index) + '.spikes'
+                # TODO: Alter current format to support events (that do not need a timestep)
+                # TODO: Store spike_list under path_string
+
+# TODO: Create some tests for NEURON dat, brian dat and brian aedat files
