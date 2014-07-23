@@ -1,8 +1,6 @@
 __author__ = 'matteocantarelli'
 
-
-from org.geppetto.recording.CreateTestGeppettoRecording import CreateTestGeppettoRecording
-
+from org.geppetto.recording.test import *
 
 testCreator = CreateTestGeppettoRecording()
 testCreator.example1()

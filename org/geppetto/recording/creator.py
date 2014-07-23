@@ -1,10 +1,14 @@
-__author__ = 'matteocantarelli'
+__author__ = 'matteocantarelli, Johannes Rieke'
 
 import h5py
 import numpy as np
 from enum import Enum
 
-MetaType = Enum('STATE_VARIABLE', 'PARAMETER', 'PROPERTY')
+
+class MetaType(Enum):
+    STATE_VARIABLE = 1
+    PARAMETER = 2
+    PROPERTY = 3
 
 
 class GeppettoRecordingCreator:
@@ -43,9 +47,12 @@ class GeppettoRecordingCreator:
     creator.add_value('a.b.c.d', [1, 2, 3, 4, 5, 6], 'float_', 'mV', MetaType.STATE_VARIABLE)
     creator.add_value('a.b', 2, 'float_', 'mV', MetaType.STATE_VARIABLE)
     creator.add_fixed_time_step_vector(1, 'ms')
+<<<<<<< HEAD:org/geppetto/recording/GeppettoRecordingCreator.py
     creator.add_metadata('string_metadata', 'description or link')
     creator.add_metadata('float_metadata', 1.0)
     creator.add_metadata('boolean_metadata', True)
+=======
+>>>>>>> 2b3b7dbf240dafab72e3a3bd14c25dbfabe4de27:org/geppetto/recording/creator.py
     creator.create()
     """
     def __init__(self, filename, simulator='Not specified'):
@@ -123,7 +130,7 @@ class GeppettoRecordingCreator:
                         dataset = node.create_dataset(path_node, (values_array.size,),
                                                       dtype=self.data_types[path_string], data=values_array)
                         dataset.attrs['unit'] = self.units.get(path_string)
-                        dataset.attrs['meta_type'] = self.meta_types.get(path_string).key
+                        dataset.attrs['meta_type'] = self.meta_types.get(path_string).name
                     else:
                         if type(node) is h5py.Dataset:
                             raise Exception('A previous leaf is now referred to as a type')
