@@ -1,7 +1,6 @@
 __author__ = 'matteocantarelli'
 
-from org.geppetto.recording.GeppettoRecordingCreator import GeppettoRecordingCreator
-from org.geppetto.recording.GeppettoRecordingCreator import MetaType
+from org.geppetto.recording import GeppettoRecordingCreator, MetaType
 
 
 class CreateTestGeppettoRecording:

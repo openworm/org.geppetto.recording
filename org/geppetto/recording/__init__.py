@@ -1,1 +1,1 @@
-__author__ = 'matteocantarelli'
+from creator import GeppettoRecordingCreator, MetaType
