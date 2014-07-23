@@ -47,12 +47,9 @@ class GeppettoRecordingCreator:
     creator.add_value('a.b.c.d', [1, 2, 3, 4, 5, 6], 'float_', 'mV', MetaType.STATE_VARIABLE)
     creator.add_value('a.b', 2, 'float_', 'mV', MetaType.STATE_VARIABLE)
     creator.add_fixed_time_step_vector(1, 'ms')
-<<<<<<< HEAD:org/geppetto/recording/GeppettoRecordingCreator.py
     creator.add_metadata('string_metadata', 'description or link')
     creator.add_metadata('float_metadata', 1.0)
     creator.add_metadata('boolean_metadata', True)
-=======
->>>>>>> 2b3b7dbf240dafab72e3a3bd14c25dbfabe4de27:org/geppetto/recording/creator.py
     creator.create()
     """
     def __init__(self, filename, simulator='Not specified'):
