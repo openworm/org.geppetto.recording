@@ -1,0 +1,50 @@
+load_file("nrngui.hoc")
+
+num_dendrites = 2
+create soma, dendrites[num_dendrites]
+access soma
+
+soma {
+	nseg = 1
+	diam = 18.8
+	L = 18.8
+	Ra = 123.0
+	insert hh
+	gnabar_hh = 0.25
+	gl_hh = 0.0001666
+	el_hh = -60.0
+}
+
+dendrites[0] {
+	nseg = 5
+	diam = 3.18
+	L = 701.9
+	Ra = 123
+}
+
+dendrites[1] {
+	nseg = 5
+	diam = 2.0
+	L = 549.1
+	Ra = 123
+}
+
+for i = 0, num_dendrites-1 {
+	dendrites[i] {
+		insert pas
+		g_pas = .0001667
+		e_pas = -60.0
+	}
+}
+
+connect dendrites[0](0), soma(0)
+connect dendrites[1](0), soma(1)
+
+// Create a stimulating electrode in the soma
+objectvar stimulus
+dendrites[0] stimulus = new IClamp(1.0)
+stimulus.del = 100
+stimulus.dur = 100
+stimulus.amp = 0.1
+
+tstop = 300
