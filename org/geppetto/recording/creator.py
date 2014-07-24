@@ -5,10 +5,7 @@ import numpy as np
 from enum import Enum
 
 
-class MetaType(Enum):
-    STATE_VARIABLE = 1
-    PARAMETER = 2
-    PROPERTY = 3
+MetaType = Enum("STATE_VARIABLE", "PARAMETER", "PROPERTY")
 
 
 class GeppettoRecordingCreator:
@@ -127,7 +124,7 @@ class GeppettoRecordingCreator:
                         dataset = node.create_dataset(path_node, (values_array.size,),
                                                       dtype=self.data_types[path_string], data=values_array)
                         dataset.attrs['unit'] = self.units.get(path_string)
-                        dataset.attrs['meta_type'] = self.meta_types.get(path_string).name
+                        dataset.attrs['meta_type'] = self.meta_types.get(path_string).key
                     else:
                         if type(node) is h5py.Dataset:
                             raise Exception('A previous leaf is now referred to as a type')
@@ -196,8 +193,6 @@ class GeppettoRecordingCreator:
                     raise ValueError('The file \"{0}\" contains a different time step vector than the one already definded'.format(recording_file))
 
 
-
-
     def add_recording_from_brian(self, recording_file, path_string_prefix=''):
         """
         Read a file that contains a recording from the brian simulator and add its contents to the current recording.
@@ -221,6 +216,7 @@ class GeppettoRecordingCreator:
                     indices[i] = int(line[:colon])
                     times[i] = float(line[colon+2:])
             else:  # AER format (recorded with brian.AERSpikeMonitor)
+                import brian
                 try:
                     indices, times = brian.load_aer(recording_file)
                 except Exception:
@@ -239,4 +235,3 @@ class GeppettoRecordingCreator:
                 # TODO: Alter current format to support events (that do not need a timestep)
                 # TODO: Store spike_list under path_string
 
-# TODO: Create some tests for NEURON dat, brian dat and brian aedat files

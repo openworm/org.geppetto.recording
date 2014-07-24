@@ -3,8 +3,13 @@ __author__ = 'matteocantarelli'
 from org.geppetto.recording import GeppettoRecordingCreator, MetaType
 import unittest
 
+
 class CreateTestGeppettoRecording(unittest.TestCase):
     """This class demonstrates how to create a recording for Geppetto."""
+
+    def setUp(self):
+        # TODO: Remove any files from previous tests
+        pass
 
     def test_fixed_timestep(self):
         creator = GeppettoRecordingCreator('example1.h5')
@@ -28,6 +33,12 @@ class CreateTestGeppettoRecording(unittest.TestCase):
         creator.add_metadata('string_metadata', 'description or link')
         creator.create()
 
+    def tearDown(self):
+        # TODO: Remove files from tests if user wants to
+        pass
+
+    # TODO: Create some tests for NEURON dat, brian dat and brian aedat files
+
 
 if __name__ == '__main__':
-    unittest.main()  # automatically executes all methods above that start with 'test'
+    unittest.main()  # automatically executes all methods above that start with 'test_'
