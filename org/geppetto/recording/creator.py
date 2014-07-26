@@ -3,6 +3,58 @@ __author__ = 'matteocantarelli, Johannes Rieke'
 import h5py
 import numpy as np
 from enum import Enum
+import string
+
+
+def _is_text_file(filepath):
+    """Return True if the file is text, False if it is binary."""
+    with open(filepath, 'r') as f:
+        test_string = f.read(512)
+        text_characters = ''.join(map(chr, range(32, 127)) + ['\n', '\r', '\t', '\b'])
+        null_translation = string.maketrans('', '')
+        if not test_string:  # empty file -> text
+            return True
+        if '\0' in test_string:  # file with null byte -> binary
+            return False
+        non_text_characters = test_string.translate(null_translation, text_characters)
+        if float(len(non_text_characters)) / float(len(test_string)) > 0.30:  # more than 30% non-text characters -> binary
+            return False
+        else:
+            return True
+
+
+def _split_by_separators(s, separators=(' ', ',', ';', '\t')):
+    """Split a string by various separators (or any combination of them) and return the non-empty substrings as a list."""
+    if not hasattr(separators, '__iter__'):
+        separators = (separators, )
+
+    substrings = []
+
+    while s:
+        next_separator_start = -1
+        next_separator_end = -1
+
+        for separator in separators:
+            separator_start = s.find(separator)
+            if separator_start != -1 and (next_separator_start == -1 or separator_start < next_separator_start):
+                next_separator_start = separator_start
+                next_separator_end = separator_start + len(separator)
+
+        if next_separator_start == -1:
+            substrings.append(s)
+            return substrings
+        elif next_separator_start:
+            substrings.append(s[:next_separator_start])
+        s = s[next_separator_end:]
+
+    return substrings
+
+
+def _func_on_iterable(iterable, func):
+    """Invoke a function on every item in an iterable and return it."""
+    for i in range(len(iterable)):
+        iterable[i] = func(iterable[i])
+    return iterable
 
 
 MetaType = Enum("STATE_VARIABLE", "PARAMETER", "PROPERTY")
@@ -71,7 +123,7 @@ class GeppettoRecordingCreator:
             raise Exception('Supply the value and be a good boy')
         if path_string not in self.values.keys():
             self.values[path_string] = []
-        if isinstance(value, list):
+        if hasattr(value, '__iter__'):
             self.values.get(path_string).extend(value)
         else:
             self.values.get(path_string).append(value)
@@ -147,7 +199,8 @@ class GeppettoRecordingCreator:
         self.__process_added_values()
         self.f.close()
 
-    def add_recording_from_neuron(self, recording_file, variable_unit='mV', path_string=None):
+    def add_recording_from_neuron(self, recording_file, variable_labels=None, variable_labels_prefix='', variable_units=None, time_column=None):
+        # TODO: Adapt docstring
         """
         Read a file that contains a recording from the NEURON simulator and add its contents to the current recording.
         The file can be created using NEURON's Graph and Vector GUI.
@@ -155,42 +208,178 @@ class GeppettoRecordingCreator:
         Keyword arguments:
         recording_file -- path to the file that should be added
         """
-        with open(recording_file, 'r') as r:
-            lines = r.read().splitlines()
-            r.close()
 
-            # Extract label
-            if path_string is None:
+        if _is_text_file(recording_file):  # text file
+            with open(recording_file, 'r') as r:
+                lines = r.read().splitlines()
+                # Omit any blank lines
+                for i, line in enumerate(lines):
+                    if line == '':
+                        lines.pop(i)
+                r.close()
 
-                path_string = lines[0][6:]
-                # Replace NEURON's location indices like v(.5) by segmentAt0_5.v
-                left_bracket = path_string.rfind('(')
-                if left_bracket != -1:
-                    right_bracket = path_string.find(')', left_bracket)
-                    location = path_string[left_bracket+1:right_bracket]
-                    if location.startswith('.'):
-                        location = '0' + location
-                    point_before_left_bracket = max(0, path_string.rfind('.', 0, left_bracket)+1)
-                    # TODO: Think about alternatives for the segment name
-                    path_string = path_string[:point_before_left_bracket] + 'segmentAt' + location.replace('.', '_') + '.' + path_string[point_before_left_bracket:left_bracket] + path_string[right_bracket+1:]
+                # Analyze the file structure:
+                # Search for 3 successive lines that hold an equal amount of numbers, this is the start of the data block
+                # On the way, store any non-number lines as possible variable labels
+                i = 0
+                start_data_lines = 0
+                num_data_columns = -1
+                num_data_lines = 0
+                possible_label_items = []
 
-            # Extract time and variable data points
-            num_steps = int(lines[1])
-            times = np.empty(num_steps)
-            values = np.empty(num_steps)
-            for i, line in enumerate(lines[2:]):
-                next_time, next_value = line.split()
-                times[i] = next_time
-                values[i] = next_value
+                while num_data_lines < 3:
+                    try:
+                        line = lines[i]
+                    except IndexError:
+                        if num_data_lines:  # at least one data line was found, go ahead and parse
+                            break
+                        else:
+                            raise ValueError("Reached end of file while analyzing file contents: " + recording_file)
+                    #print 'line:', line
+                    items = _split_by_separators(line)
+                    #print 'items:', items
+                    try:
+                        items = _func_on_iterable(items, float)
+                        is_data_line = True
+                    except ValueError:  # this is not a data line
+                        is_data_line = False
 
-            # Add everything to HDF5
-            # TODO: Extract unit depending on variable name or at least give warning if they don't match
-            self.add_value(path_string, values, 'float_', variable_unit, MetaType.STATE_VARIABLE)
-            if self.time is None:
-                self.add_variable_time_step_vector(times, 'ms')
-            else:
-                if not np.all(self.time == times):
-                    raise ValueError('The file \"{0}\" contains a different time step vector than the one already definded'.format(recording_file))
+                    if is_data_line:
+                        if num_data_columns != len(items):  # this is the first data line
+                            num_data_columns = len(items)
+                            num_data_lines = 1
+                            start_data_lines = i
+                        else:  # this is a further data line
+                            num_data_lines += 1
+                    else:
+                        num_data_lines = 0
+                        num_data_columns = -1
+                        possible_label_items.append(items)
+
+                    i += 1
+
+
+                if variable_units is not None:
+                    # Check if the number of data columns and variable units match
+                    if len(variable_units) != num_data_columns:
+                        raise ValueError("Got {0} variable units but found {1} data columns".format(len(variable_units), num_data_columns))
+                else:
+                    # Make list of placeholder variable units
+                    variable_units = ['unknown_unit'] * num_data_columns
+
+                if variable_labels is not None:
+                    # Check if the number of data columns and variable labels match
+                    if len(variable_labels) != num_data_columns:
+                        raise ValueError("Got {0} variable labels but found {1} data columns".format(len(variable_labels), num_data_columns))
+                else:
+                    # Find variable labels in possible_label_items extracted above
+                    labels_found = False
+                    # TODO: What if multiple item sets with the same plausibility are found? Currently, the last one is used.
+                    # TODO: Find out if an item set contains units.
+                    if possible_label_items:
+                        variable_labels = possible_label_items[0]
+                        current_labels_plausibility = 0
+                        for items in possible_label_items:
+                            # check items for different attributes which make them more or less plausible to be the variable labels
+                            if current_labels_plausibility < 1:
+                                # plausibility 1: one less item than data columns (the missing label is time)
+                                if len(items) == num_data_columns-1:
+                                    variable_labels = ['time'] + items
+                                    current_labels_plausibility = 1
+                                    print 'found better labels with plausibility 1:', items
+                            if current_labels_plausibility < 2:
+                                # plausibility 2: equally many items and data columns
+                                if len(items) == num_data_columns:
+                                    variable_labels = items
+                                    current_labels_plausibility = 2
+                                    print 'found better labels with plausibility 2:', items
+                            if current_labels_plausibility < 3:
+                                # plausibility 3: one less item than data columns (the missing label is time) and one item contains 'label:'
+                                if len(items) == num_data_columns-1:
+                                    for i, item in enumerate(items):
+                                        if item.find('label:') != -1:
+                                            items[i] = items[i].replace('label:', '')
+                                            variable_labels = ['time'] + items
+                                            time_column = 0
+                                            current_labels_plausibility = 3
+                                            print 'found better labels with plausibility 3:', items
+                                            break
+                            if current_labels_plausibility < 4:
+                                # plausibility 4: equally many items and data columns and one item contains 'label:'
+                                if len(items) == num_data_columns:
+                                    for i, item in enumerate(items):
+                                        if item.find('label:') != -1:
+                                            items[i] = items[i].replace('label:', '')
+                                            variable_labels = ['time'] + items
+                                            time_column = 0
+                                            current_labels_plausibility = 4
+                                            print 'found better labels with plausibility 4:', items
+                                            break
+                        if current_labels_plausibility > 0:
+                            labels_found = True
+
+                    if labels_found:
+                        for i, label in enumerate(variable_labels):
+                            # Replace NEURON's location indices like v(.5) by segmentAt0_5.v
+                            left_bracket = variable_labels[i].rfind('(')
+                            while left_bracket != -1:
+                                right_bracket = label.find(')', left_bracket)
+                                location_string = label[left_bracket+1:right_bracket]
+                                if location_string.startswith('.'):
+                                    location_string = '0' + location_string
+                                point_before_left_bracket = max(0, label.rfind('.', 0, left_bracket)+1)
+                                # TODO: Think about alternatives for the segment name
+                                variable_labels[i] = label[:point_before_left_bracket] + 'segmentAt' + location_string.replace('.', '_') + '.' + label[point_before_left_bracket:left_bracket] + label[right_bracket+1:]
+                                left_bracket = variable_labels[i].rfind('(')
+                    else:
+                        variable_labels = ['unknown_variable_' + str(i) for i in range(num_data_columns)]
+                print 'final labels:', variable_labels
+
+                # Search for a label containing 'time' and select it as the time column
+                if time_column is None:
+                    for i, label in enumerate(variable_labels):
+                        if label.lower().find('time') != -1:
+                            time_column = i
+                            break
+
+                # Allocate arrays for data points
+                num_total_data_lines = len(lines) - start_data_lines
+                data_columns = np.zeros((num_data_columns, num_total_data_lines))  # first dimension is variable, second dimension is step
+
+                # Read all data and store it in the arrays
+                for i, line in enumerate(lines[start_data_lines:]):
+                    # TODO: Make option to fill missing data points with zeros
+                    # TODO: Use extract_numbers function instead?
+                    items = _split_by_separators(line)
+                    try:
+                        numbers = _func_on_iterable(items, float)
+                    except ValueError:
+                        # TODO: Raise ValueError that shows both the filename and the specific item that could not be cast (not the complete list)
+                        raise ValueError("Could not cast {0} to float: ".format(items) + recording_file)
+                    try:
+                        data_columns[:, i] = numbers
+                    except ValueError:
+                        raise ValueError("Found {0} data columns during analysis, now encountered line \"{1}\" with {2} numbers: ".format(num_data_columns, line, len(numbers)) + recording_file)
+
+                print data_columns
+
+                # Add everything to the Geppetto recording file
+                for i, (label, unit, data) in enumerate(zip(variable_labels, variable_units, data_columns)):
+                    if i == time_column:
+                        # TODO: Maybe check this in add_variable_time_step_vector
+                        if self.time is None:
+                            self.add_variable_time_step_vector(data, unit)
+                        else:
+                            if not np.all(self.time == data):
+                                raise ValueError('The file \"{0}\" contains a different time step vector than the one already definded'.format(recording_file))
+
+                        pass
+                    else:
+                        self.add_value(variable_labels_prefix + label, data, 'float_', unit, MetaType.STATE_VARIABLE)
+
+        else:  # binary file
+            # TODO: Read file with h.Vector.vread
+            pass
 
 
     def add_recording_from_brian(self, recording_file, path_string_prefix=''):
@@ -201,37 +390,43 @@ class GeppettoRecordingCreator:
         Keyword arguments:
         recording_file -- path to the file that should be added
         """
-        with open(recording_file, 'r') as r:
-            file_content = r.read()
-            r.close()
 
-            # TODO: Add exceptions if file can not be parsed
-            if file_content.find('AER-DAT') == -1:  # txt format (recorded with brian.FileSpikeMonitor)
+        # TODO: Add exceptions if file can not be parsed
+        if _is_text_file(recording_file):
+            with open(recording_file, 'r') as r:
+                file_content = r.read()
+                r.close()
+
                 lines = file_content.splitlines()
-                # Extract indices and spike times similar to brian.load_aer() below
+                # Extract indices and spike times in a similar manner to brian.load_aer() below
                 indices = np.empty(len(lines), dtype='int')
                 times = np.empty(len(lines))
                 for i, line in enumerate(lines):
                     colon = line.find(',')
                     indices[i] = int(line[:colon])
                     times[i] = float(line[colon+2:])
-            else:  # AER format (recorded with brian.AERSpikeMonitor)
-                import brian
-                try:
-                    indices, times = brian.load_aer(recording_file)
-                except Exception:
-                    raise ValueError('The file \"{0}\" looks like an AER file but cannot be read'.format(recording_file))
+        else:  # binary format
+            import brian
+            try:
+                indices, times = brian.load_aer(recording_file)
+            except Exception:
+                raise ValueError("Could not parse AER file: " + recording_file)
 
-            spikes = {}
-            for index, time in zip(indices, times):
-                str_index = str(index)
-                if not str_index in spikes:
-                    spikes[str_index] = []
-                spikes[str_index].append(time)
+        # TODO: Should empty files be neglected or should an error be raised?
+        if len(indices) == 0 or len(times) == 0:
+            raise ValueError("Could not parse file or file is empty: " + recording_file)
 
-            for index, spike_list in spikes.items():
-                # TODO: Think about alternative naming for neuron
-                path_string = path_string_prefix + 'neuron' + str(index) + '.spikes'
-                # TODO: Alter current format to support events (that do not need a timestep)
-                # TODO: Store spike_list under path_string
+        spikes = {}
+        for index, time in zip(indices, times):
+            str_index = str(index)
+            if not str_index in spikes:
+                spikes[str_index] = []
+            spikes[str_index].append(time)
+
+        for index, spike_list in spikes.items():
+            # TODO: Think about alternative naming for neuron
+            path_string = path_string_prefix + 'neuron' + str(index) + '.spikes'
+            # TODO: Alter current format to support events (that do not need a timestep)
+            # TODO: Make MetaType.EVENT
+            self.add_value(path_string, spike_list, 'float_', 'ms', MetaType.STATE_VARIABLE)
 
