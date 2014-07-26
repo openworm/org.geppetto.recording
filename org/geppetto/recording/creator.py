@@ -209,6 +209,11 @@ class GeppettoRecordingCreator:
         recording_file -- path to the file that should be added
         """
 
+        if variable_labels is not None and not hasattr(variable_labels, '__iter__'):
+            variable_labels = [variable_labels]
+        if variable_units is not None and not hasattr(variable_units, '__iter__'):
+            variable_units = [variable_units]
+
         if _is_text_file(recording_file):  # text file
             with open(recording_file, 'r') as r:
                 lines = r.read().splitlines()
@@ -262,7 +267,7 @@ class GeppettoRecordingCreator:
                 if variable_units is not None:
                     # Check if the number of data columns and variable units match
                     if len(variable_units) != num_data_columns:
-                        raise ValueError("Got {0} variable units but found {1} data columns".format(len(variable_units), num_data_columns))
+                        raise IndexError("Got {0} variable units but found {1} data column(s)".format(len(variable_units), num_data_columns))
                 else:
                     # Make list of placeholder variable units
                     variable_units = ['unknown_unit'] * num_data_columns
@@ -270,7 +275,7 @@ class GeppettoRecordingCreator:
                 if variable_labels is not None:
                     # Check if the number of data columns and variable labels match
                     if len(variable_labels) != num_data_columns:
-                        raise ValueError("Got {0} variable labels but found {1} data columns".format(len(variable_labels), num_data_columns))
+                        raise IndexError("Got {0} variable labels but found {1} data column(s)".format(len(variable_labels), num_data_columns))
                 else:
                     # Find variable labels in possible_label_items extracted above
                     labels_found = False
@@ -332,6 +337,7 @@ class GeppettoRecordingCreator:
                                 variable_labels[i] = label[:point_before_left_bracket] + 'segmentAt' + location_string.replace('.', '_') + '.' + label[point_before_left_bracket:left_bracket] + label[right_bracket+1:]
                                 left_bracket = variable_labels[i].rfind('(')
                     else:
+                        # TODO: Handle numbers when multiple files with unknown variables are supplied
                         variable_labels = ['unknown_variable_' + str(i) for i in range(num_data_columns)]
                 print 'final labels:', variable_labels
 
@@ -355,11 +361,11 @@ class GeppettoRecordingCreator:
                         numbers = _func_on_iterable(items, float)
                     except ValueError:
                         # TODO: Raise ValueError that shows both the filename and the specific item that could not be cast (not the complete list)
-                        raise ValueError("Could not cast {0} to float: ".format(items) + recording_file)
+                        raise TypeError("Could not cast {0} to float: ".format(items) + recording_file)
                     try:
                         data_columns[:, i] = numbers
                     except ValueError:
-                        raise ValueError("Found {0} data columns during analysis, now encountered line \"{1}\" with {2} numbers: ".format(num_data_columns, line, len(numbers)) + recording_file)
+                        raise IndexError("Found {0} data columns during analysis, now encountered line \"{1}\" with {2} numbers: ".format(num_data_columns, line, len(numbers)) + recording_file)
 
                 print data_columns
 
@@ -371,15 +377,38 @@ class GeppettoRecordingCreator:
                             self.add_variable_time_step_vector(data, unit)
                         else:
                             if not np.all(self.time == data):
-                                raise ValueError('The file \"{0}\" contains a different time step vector than the one already definded'.format(recording_file))
-
-                        pass
+                                # TODO: Reconcile error messages
+                                raise ValueError('The file \"{0}\" contains a different time step vector than the one already defined'.format(recording_file))
                     else:
                         self.add_value(variable_labels_prefix + label, data, 'float_', unit, MetaType.STATE_VARIABLE)
 
         else:  # binary file
-            # TODO: Read file with h.Vector.vread
-            pass
+            # TODO: Handle import somewhere else
+            from neuron import h
+            f = h.File()
+            f.ropen(recording_file)
+            vector = h.Vector()
+            vector.vread(f)
+            if vector:
+
+                # TODO: Do these sanity checks and add_value calls together with the ones for a text file
+                # Check if the number of data columns and variable labels match
+                if variable_labels is not None:
+                    if len(variable_labels) != 1:
+                        raise IndexError("Got {0} variable labels but found 1 data column(s)".format(len(variable_labels)))
+                else:
+                    variable_labels = ['unknown_variable_0']
+
+                # Check if the number of data columns and variable units match
+                if variable_units is not None:
+                    if len(variable_units) != 1:
+                        raise IndexError("Got {0} variable units but found 1 data column(s)".format(len(variable_labels)))
+                else:
+                    variable_units = ['unknown_unit']
+
+                self.add_value(variable_labels[0], vector.to_python(), 'float_', variable_units[0], MetaType.STATE_VARIABLE)
+            else:
+                raise ValueError("Binary file is empty or could not be parsed: " + recording_file)
 
 
     def add_recording_from_brian(self, recording_file, path_string_prefix=''):
