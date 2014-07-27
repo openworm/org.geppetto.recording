@@ -1,5 +1,3 @@
-load_file("nrngui.hoc")
-
 num_dendrites = 2
 create soma, dendrites[num_dendrites]
 access soma
@@ -42,7 +40,7 @@ connect dendrites[1](0), soma(1)
 
 // Create a stimulating electrode in the soma
 objectvar stimulus
-dendrites[0] stimulus = new IClamp(1.0)
+dendrites[0] stimulus = new IClamp(0.5)
 stimulus.del = 100
 stimulus.dur = 100
 stimulus.amp = 0.1

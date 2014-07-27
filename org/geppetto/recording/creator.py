@@ -421,8 +421,82 @@ class NeuronRecordingCreator(GeppettoRecordingCreator):
             else:
                 raise ValueError("Binary file is empty or could not be parsed: " + recording_file)
 
-    def record_neuron_model(self):
-        pass
+    def record_neuron_model(self, model_file, tstop=None, dt=None):
+        import neuron
+        from neuron import h
+        # TODO: Currently, model_file must not contain sth like load_file("nrngui.hoc") because this hoc file cannot be found
+        h.load_file(model_file.replace('\\', '/'))  # load_file needs slashes, also on Windows
+
+        time_vector = h.Vector()
+        time_vector.record(h._ref_t)
+        vectors = []
+        labels = []
+
+        for section in h.allsec():
+            self.add_value(section.name() + '.L', section.L, 'float_', 'um', MetaType.PROPERTY)
+            for segment in section:
+                segment_label = section.name() + '.segmentAt' + str(segment.x).replace('.', '_')
+                self.add_value(segment_label + '.diam', segment.diam, 'float_', 'um', MetaType.PROPERTY)
+                vector_v = h.Vector()
+                vector_v.record(segment._ref_v)
+                vectors.append(vector_v)
+                labels.append(segment_label + '.v')
+                #print 'has public attributes: ', [a for a in dir(segment) if not a[:1] == '_']
+                #print dir(segment.point_processes)
+                #for point_process in segment.point_processes():
+                    #print 'found:', point_process
+            print section.name() + ' (' + str(section)
+
+        print '-> set up ' + str(len(vectors)) + ' vectors'
+
+        # access point processes (here: of type IClamp), see http://www.neuron.yale.edu/phpbb/viewtopic.php?f=8&t=186
+        # TODO: How to do this in Python natively?
+        # TODO: How to dereference to section (see URL above)?
+        # TODO: How/where to store this in HDF5?
+        # TODO: Synapses
+        h('objref listIClamps')
+        h('listIClamps = new List("IClamp")')
+        i_clamps = h.listIClamps
+
+        for i, i_clamp in enumerate(i_clamps):
+            label = 'i_clamp_' + str(i)
+            self.add_value(label + '.dur', i_clamp.dur, 'float_', 'ms', MetaType.PARAMETER)
+            self.add_value(label + '.del', i_clamp.delay, 'float_', 'ms', MetaType.PARAMETER)
+            self.add_value(label + '.amp', i_clamp.amp, 'float_', 'mA', MetaType.PARAMETER)
+            vector_i = h.Vector()
+            vector_i.record(i_clamp._ref_i)
+            vectors.append(vector_i)
+            #print i_clamp.Section
+            # TODO: Get i_clamp name
+            labels.append(label + '.i')
+
+        # TODO: Search for  run command in model file? -> execute the code before it, then attach vectors and execute the rest
+        # TODO: Describe this behaviour in the docstring
+        if tstop is not None:
+            h.tstop = tstop
+        else:
+            if not hasattr(h, 'tstop'):
+                h.tstop = 5
+
+        if dt is not None:
+            h.dt = dt
+        else:
+            if not hasattr(h, 'dt'):
+                h.dt = 0.025
+
+        print 'running for', h.tstop, 'ms with timestep', h.dt, 'ms'
+
+        neuron.init()
+        neuron.run(h.tstop)
+
+        for label, vector_v in zip(labels, vectors):
+            # TODO: Extract unit
+            self.add_value(label, vector_v.to_python(), 'float_', 'unknown_unit', MetaType.STATE_VARIABLE)
+
+        # TODO: Is time in NEURON always in ms?
+        self.add_variable_time_step_vector(time_vector.to_python(), 'ms')
+
+
 
 class BrianRecordingCreator(GeppettoRecordingCreator):
 
