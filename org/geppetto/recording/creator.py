@@ -205,7 +205,22 @@ class NeuronRecordingCreator(GeppettoRecordingCreator):
     def __init__(self, filename):
         GeppettoRecordingCreator.__init__(self, filename, 'NEURON')
 
-    def add_recording_from_neuron(self, recording_file, variable_labels=None, variable_labels_prefix='', variable_units=None, time_column=None):
+    @staticmethod
+    def _replace_location_indices(s):
+        """Replace all of NEURON's location indices in a string like v(.5) by segmentAt0_5.v and return the string."""
+        left_bracket = s.rfind('(')
+        while left_bracket != -1:
+            right_bracket = s.find(')', left_bracket)
+            location_string = s[left_bracket+1:right_bracket]
+            if location_string.startswith('.'):
+                location_string = '0' + location_string
+            point_before_left_bracket = max(0, s.rfind('.', 0, left_bracket)+1)
+            # TODO: Think about alternatives for the segment name
+            s = s[:point_before_left_bracket] + 'segmentAt' + location_string.replace('.', '_') + '.' + s[point_before_left_bracket:left_bracket] + s[right_bracket+1:]
+            left_bracket = s.rfind('(')
+        return s
+
+    def add_neuron_recording(self, recording_file, variable_labels=None, variable_labels_prefix='', variable_units=None, time_column=None):
         # TODO: Adapt docstring
         """
         Read a file that contains a recording from the NEURON simulator and add its contents to the current recording.
@@ -330,18 +345,8 @@ class NeuronRecordingCreator(GeppettoRecordingCreator):
                             labels_found = True
 
                     if labels_found:
-                        for i, label in enumerate(variable_labels):
-                            # Replace NEURON's location indices like v(.5) by segmentAt0_5.v
-                            left_bracket = variable_labels[i].rfind('(')
-                            while left_bracket != -1:
-                                right_bracket = label.find(')', left_bracket)
-                                location_string = label[left_bracket+1:right_bracket]
-                                if location_string.startswith('.'):
-                                    location_string = '0' + location_string
-                                point_before_left_bracket = max(0, label.rfind('.', 0, left_bracket)+1)
-                                # TODO: Think about alternatives for the segment name
-                                variable_labels[i] = label[:point_before_left_bracket] + 'segmentAt' + location_string.replace('.', '_') + '.' + label[point_before_left_bracket:left_bracket] + label[right_bracket+1:]
-                                left_bracket = variable_labels[i].rfind('(')
+                        for i in range(len(variable_labels)):
+                            variable_labels[i] = self._replace_location_indices(variable_labels[i])
                     else:
                         # TODO: Handle numbers when multiple files with unknown variables are supplied
                         variable_labels = ['unknown_variable_' + str(i) for i in range(num_data_columns)]
@@ -416,13 +421,15 @@ class NeuronRecordingCreator(GeppettoRecordingCreator):
             else:
                 raise ValueError("Binary file is empty or could not be parsed: " + recording_file)
 
+    def record_neuron_model(self):
+        pass
 
 class BrianRecordingCreator(GeppettoRecordingCreator):
 
     def __init__(self, filename):
         GeppettoRecordingCreator.__init__(self, filename, 'Brian')
 
-    def add_recording_from_brian(self, recording_file, path_string_prefix=''):
+    def add_brian_recording(self, recording_file, path_string_prefix=''):
         """
         Read a file that contains a recording from the brian simulator and add its contents to the current recording.
         The file can be created using brian's FileSpikeMonitor or AERSpikeMonitor.
@@ -469,4 +476,7 @@ class BrianRecordingCreator(GeppettoRecordingCreator):
             # TODO: Alter current format to support events (that do not need a timestep)
             # TODO: Make MetaType.EVENT
             self.add_value(path_string, spike_list, 'float_', 'ms', MetaType.STATE_VARIABLE)
+
+    def record_brian_model(self):
+        raise NotImplementedError("I'm waiting for someone to implement me")
 
