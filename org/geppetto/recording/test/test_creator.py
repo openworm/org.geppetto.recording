@@ -1,11 +1,11 @@
 __author__ = 'matteocantarelli'
 
-from org.geppetto.recording import GeppettoRecordingCreator, MetaType
+from org.geppetto.recording import GeppettoRecordingCreator, NeuronRecordingCreator, BrianRecordingCreator, MetaType
 import unittest
 import os
 
 
-class GeppettoRecordingCreatorTestCase(unittest.TestCase):
+class RecordingCreatorTestCase(unittest.TestCase):
     """This class demonstrates how to create a recording for Geppetto."""
 
     REMOVE_FILES_AFTER_TEST = True
@@ -55,7 +55,7 @@ class GeppettoRecordingCreatorTestCase(unittest.TestCase):
         c.create()
 
     def test_neuron_recording_text_1(self):
-        c = GeppettoRecordingCreator('test_neuron_recording_text_1.h5')
+        c = NeuronRecordingCreator('test_neuron_recording_text_1.h5')
         self.register_test_recording_creator(c)
         c.add_recording_from_neuron('neuron_recordings\\text_from_gui.dat', variable_units=['ms', 'mV'])#text_time.dat')#
         self.assertAlmostEquals(c.values['soma.segmentAt0_5.v'], [-65, -65.0156, -65.0244, -65.0285])
@@ -66,7 +66,7 @@ class GeppettoRecordingCreatorTestCase(unittest.TestCase):
         c.f.close()
 
     def test_neuron_recording_text_2(self):
-        c = GeppettoRecordingCreator('test_neuron_recording_text_2.h5')
+        c = NeuronRecordingCreator('test_neuron_recording_text_2.h5')
         self.register_test_recording_creator(c)
         c.add_recording_from_neuron('neuron_recordings\\text_multiple_variables.dat', variable_labels_prefix='segment.')
         self.assertAlmostEquals(c.values['segment.ica'], [-0.000422814, -0.000422814])
@@ -79,7 +79,7 @@ class GeppettoRecordingCreatorTestCase(unittest.TestCase):
         c.f.close()
 
     def test_neuron_recording_binary(self):
-        c = GeppettoRecordingCreator('test_neuron_recording_binary.h5')
+        c = NeuronRecordingCreator('test_neuron_recording_binary.h5')
         self.register_test_recording_creator(c)
         c.add_recording_from_neuron('neuron_recordings\\binary_voltage.dat', variable_labels='v')
         # TODO: Make test recording shorter and run assertEquals checks
@@ -87,14 +87,14 @@ class GeppettoRecordingCreatorTestCase(unittest.TestCase):
         c.f.close()
 
     def test_neuron_recording_binary_corrupted(self):
-        c = GeppettoRecordingCreator('test_neuron_recording_binary_corrupted.h5')
+        c = NeuronRecordingCreator('test_neuron_recording_binary_corrupted.h5')
         self.register_test_recording_creator(c)
         self.assertRaises(ValueError, c.add_recording_from_neuron, ('neuron_recordings\\binary_corrupted.dat'))
         # TODO: create does not work yet
         c.f.close()
 
     def test_brian_recording_text(self):
-        c = GeppettoRecordingCreator('test_brian_recording_text.h5')
+        c = BrianRecordingCreator('test_brian_recording_text.h5')
         self.register_test_recording_creator(c)
         c.add_recording_from_brian('brian_recordings\\filespikemonitor.dat')
         self.assertAlmostEquals(c.values['neuron0.spikes'], [0.0102, 0.0582])
@@ -106,7 +106,7 @@ class GeppettoRecordingCreatorTestCase(unittest.TestCase):
         c.f.close()
 
     def test_brian_recording_binary(self):
-        c = GeppettoRecordingCreator('test_brian_recording_binary.h5')
+        c = BrianRecordingCreator('test_brian_recording_binary.h5')
         self.register_test_recording_creator(c)
         c.add_recording_from_brian('brian_recordings\\aerspikemonitor.aedat')
         self.assertAlmostEquals(c.values['neuron0.spikes'], [0.0102, 0.0582])

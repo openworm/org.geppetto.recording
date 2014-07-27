@@ -199,6 +199,12 @@ class GeppettoRecordingCreator:
         self.__process_added_values()
         self.f.close()
 
+
+class NeuronRecordingCreator(GeppettoRecordingCreator):
+
+    def __init__(self, filename):
+        GeppettoRecordingCreator.__init__(self, filename, 'NEURON')
+
     def add_recording_from_neuron(self, recording_file, variable_labels=None, variable_labels_prefix='', variable_units=None, time_column=None):
         # TODO: Adapt docstring
         """
@@ -410,6 +416,11 @@ class GeppettoRecordingCreator:
             else:
                 raise ValueError("Binary file is empty or could not be parsed: " + recording_file)
 
+
+class BrianRecordingCreator(GeppettoRecordingCreator):
+
+    def __init__(self, filename):
+        GeppettoRecordingCreator.__init__(self, filename, 'Brian')
 
     def add_recording_from_brian(self, recording_file, path_string_prefix=''):
         """

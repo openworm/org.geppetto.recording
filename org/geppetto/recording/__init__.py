@@ -1,1 +1,1 @@
-from creator import GeppettoRecordingCreator, MetaType
+from creator import GeppettoRecordingCreator, NeuronRecordingCreator, BrianRecordingCreator, MetaType
