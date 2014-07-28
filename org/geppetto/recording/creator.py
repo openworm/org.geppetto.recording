@@ -1,9 +1,8 @@
-__author__ = 'matteocantarelli, Johannes Rieke'
-
 import h5py
 import numpy as np
 from enum import Enum
 import string
+import os
 
 
 def _is_text_file(filepath):
@@ -57,10 +56,11 @@ def _func_on_iterable(iterable, func):
     return iterable
 
 
-MetaType = Enum("STATE_VARIABLE", "PARAMETER", "PROPERTY")
+MetaType = Enum('STATE_VARIABLE', 'PARAMETER', 'PROPERTY', 'EVENT')
 
 
 class GeppettoRecordingCreator:
+    # TODO: Adapt docstring
     """
     This class allows to create a recording for Geppetto.
 
@@ -101,8 +101,20 @@ class GeppettoRecordingCreator:
     creator.add_metadata('boolean_metadata', True)
     creator.create()
     """
-    def __init__(self, filename, simulator='Not specified'):
-        self.f = h5py.File(filename, 'a')
+    def __init__(self, filename, simulator='Not specified', overwrite=False,):
+        # TODO: Add support for file to be reopened
+        # TODO: Test
+        self.remove_previous_file = False
+        if os.path.exists(filename):
+            if os.path.isfile(filename):  # file
+                if overwrite:
+                    self.remove_previous_file = True
+                else:
+                    raise IOError("File already exists, set the overwrite flag to remove it before writing: " + filename)
+            else:  # directory
+                raise IOError("Filename points to a directory: " + filename)
+
+        self.filename = filename
         self.values = {}
         self.units = {}
         self.data_types = {}
@@ -112,92 +124,123 @@ class GeppettoRecordingCreator:
         self.simulator = simulator
         self.metadata = {}
 
-    def add_value(self, path_string, value, data_type, unit, meta_type):
-        if not unit:
-            raise Exception('Supply a unit and be a good boy')
-        if not meta_type:
-            raise Exception('Supply the meta type and be a good boy')
-        if not data_type:
-            raise Exception('Supply the numpy data type and be a good boy')
-        if not data_type:
-            raise Exception('Supply the value and be a good boy')
-        if path_string not in self.values.keys():
-            self.values[path_string] = []
+    def add_value(self, label, value, unit, meta_type):
+        if not label:
+            raise ValueError("Label is empty")
+        if meta_type not in MetaType:
+            raise TypeError("Meta type is not a member of enum MetaType: " + str(meta_type))
+        if unit is None:  # dimensionless
+            unit = ''
+
+        if label not in self.values:
+            # TODO: Use numpy arrays instead? -> Check performance of extending numpy arrays vs python lists
+            self.values[label] = []
         if hasattr(value, '__iter__'):
-            self.values.get(path_string).extend(value)
+            self.values.get(label).extend(value)
         else:
-            self.values.get(path_string).append(value)
-        self.units[path_string] = unit
-        self.data_types[path_string] = data_type
-        self.meta_types[path_string] = meta_type
+            self.values.get(label).append(value)
+        self.units[label] = unit
+        self.meta_types[label] = meta_type
 
-    def __get_max_length(self):
-        max_length = 0
-        for v in self.values.values():
-            max_length = max(max_length, len(v))
-        return max_length
-
-    def add_fixed_time_step_vector(self, time_step, unit):
+    def add_time(self, time_step_or_vector, unit):
+        print time_step_or_vector
+        if self.time is not None:
+            raise RuntimeError("Time has already been defined previously")
         if not unit:
-            raise Exception('Supply a unit and be a good boy')
-        if not time_step:
-            raise Exception('Supply the time step and be a good boy')
-        length = self.__get_max_length()
-        self.time = [None] * length
-        for i in range(0, length):
-            self.time[i] = [i * time_step]
+            raise ValueError("The time unit cannot be empty")
+        if time_step_or_vector is None:
+            raise ValueError("Supply a time step or vector and be a good boy")
+        elif not hasattr(time_step_or_vector, '__iter__') and time_step_or_vector == 0:
+            raise ValueError("The time step cannot be 0")
+        elif hasattr(time_step_or_vector, '__iter__') and len(time_step_or_vector) == 0:
+            raise ValueError("The time vector cannot be empty")
+        self.time = time_step_or_vector  # will be parsed in _process_added_values
         self.time_unit = unit
 
-    def add_variable_time_step_vector(self, time_step, unit):
-        if len(time_step) < self.__get_max_length():
-            raise Exception('There are not enough time steps defined in the passed vector to cover all the values')
-        else:
-            self.time = time_step
-            self.time_unit = unit
-
-    def __process_added_values(self):
-        self.f.attrs['simulator'] = self.simulator
+    def _process_added_values(self, f):
+        f.attrs['simulator'] = self.simulator
         for name, value in self.metadata.iteritems():
-            self.f.attrs[name] = value
-        time_data_set = self.f.create_dataset('time', (len(self.time),), dtype='float_', data=self.time)
-        time_data_set.attrs['unit'] = self.time_unit
-        for path_string in self.values.keys():
-            path = path_string.split(".")
-            node = self.f
-            for path_node in path:
-                #if the group already exists get it
-                if path_node in node:
-                    node = node.get(path_node)
-                #else create it
-                else:
-                    if path_node == path[-1]:
-                        #this is the leaf create a dataset to store the values
-                        values_array = np.array(self.values.get(path_string))
-                        dataset = node.create_dataset(path_node, (values_array.size,),
-                                                      dtype=self.data_types[path_string], data=values_array)
-                        dataset.attrs['unit'] = self.units.get(path_string)
-                        dataset.attrs['meta_type'] = self.meta_types.get(path_string).key
-                    else:
-                        if type(node) is h5py.Dataset:
-                            raise Exception('A previous leaf is now referred to as a type')
-                        else:
-                            node = node.create_group(path_node)
-            #at this stage node will have the leaf for our path, we can go ahead and add the data
-            print node
+            f.attrs[name] = value
+
+        # TODO: Should the number of steps in the state variables match (with each other and with the time vector) or should it only be smaller than the time vector?
+        # num_steps = None
+        # for label in self.values.keys():
+        #     if self.meta_types[label] == MetaType.STATE_VARIABLE:
+        #         if num_steps is None:
+        #             num_steps = len(self.values[label])
+        #         else:
+        #             if len(self.values[label]) != num_steps:
+        #                 raise IndexError("The number of steps in the state variables do not match")
+
+        max_num_steps = 0
+        for label in self.values.keys():
+            if self.meta_types[label] == MetaType.STATE_VARIABLE:
+                max_num_steps = max(max_num_steps, len(self.values[label]))
+
+        is_time_vector = hasattr(self.time, '__iter__')
+        if max_num_steps or is_time_vector:  # do not write time for a fixed time step and no state variables
+            if self.time is None:
+                raise RuntimeError("There are state variables but no time is defined, call add_time")
+            if is_time_vector:
+                if len(self.time) != max_num_steps:
+                    raise IndexError("The number of steps in the time vector and in the state variables do not match")
+            else:  # fixed time step
+                self.time = np.linspace(0, max_num_steps * self.time, max_num_steps, endpoint=False)
+            f['time'] = self.time
+            f['time'].attrs['unit'] = self.time_unit
+
+        #time_data_set = self.f.create_dataset('time', (len(self.time),), dtype='float_', data=self.time)
+        #time_data_set.attrs['unit'] = self.time_unit
+
+        for label in self.values.keys():
+            path = label.replace('.', '/')
+            try:
+                f[path] = self.values[label]
+                f[path].attrs['unit'] = self.units[label]
+                f[path].attrs['meta_type'] = str(self.meta_types[label])
+            except RuntimeError:
+                # TODO: What are ALL the reasons that raise this exception?
+                # TODO: Should the case 'A previous leaf is now referred to as a type' be explicitly mentioned in the error message?
+                raise ValueError("Cannot write dataset for variable " + label)
+
+        # for path_string in self.values.keys():
+        #     path = path_string.split('.')
+        #     node = self.f
+        #     for path_node in path:
+        #         #if the group already exists get it
+        #         if path_node in node:
+        #             node = node.get(path_node)
+        #         #else create it
+        #         else:
+        #             if path_node == path[-1]:
+        #                 #this is the leaf create a dataset to store the values
+        #                 values_array = np.array(self.values.get(path_string))
+        #                 dataset = node.create_dataset(path_node, (values_array.size,),
+        #                                               dtype=self.data_types[path_string], data=values_array)
+        #                 dataset.attrs['unit'] = self.units.get(path_string)
+        #                 dataset.attrs['meta_type'] = self.meta_types.get(path_string).key
+        #             else:
+        #                 if type(node) is h5py.Dataset:
+        #                     raise Exception('A previous leaf is now referred to as a type')
+        #                 else:
+        #                     node = node.create_group(path_node)
+        #     #at this stage node will have the leaf for our path, we can go ahead and add the data
+        #     print node
 
     def add_metadata(self, name, value):
         if not name:
             raise Exception('Supply a name and be a good boy')
-        if not value:
-            raise Exception('Supply a value and be a good boy')
+        if value is None:  # empty metadata, for example to set a flag
+            value = ''
         self.metadata[name] = value
 
     def create(self):
-        if self.time is None:  # can be a numpy array, in this case `if not self.time` will raise an error
-            raise Exception('Time step vector is not defined, '
-                            'call add_fixed_time_step_vector or add_variable_time_step_vector')
-        self.__process_added_values()
-        self.f.close()
+        if self.remove_previous_file:
+            os.remove(self.filename)
+        f = h5py.File(self.filename, 'w-')  # create file here to avoid an empty file if an error occurs
+        # TODO: Include _process_added_values here?
+        self._process_added_values(f)
+        f.close()
 
 
 class NeuronRecordingCreator(GeppettoRecordingCreator):
@@ -384,14 +427,13 @@ class NeuronRecordingCreator(GeppettoRecordingCreator):
                 for i, (label, unit, data) in enumerate(zip(variable_labels, variable_units, data_columns)):
                     if i == time_column:
                         # TODO: Maybe check this in add_variable_time_step_vector
-                        if self.time is None:
-                            self.add_variable_time_step_vector(data, unit)
-                        else:
-                            if not np.all(self.time == data):
-                                # TODO: Reconcile error messages
-                                raise ValueError('The file \"{0}\" contains a different time step vector than the one already defined'.format(recording_file))
+                        try:
+                            self.add_time(data, unit)
+                        except RuntimeError:
+                            # TODO: Reconcile error messages
+                            raise ValueError('The file \"{0}\" contains a different time step vector than the one already defined'.format(recording_file))
                     else:
-                        self.add_value(variable_labels_prefix + label, data, 'float_', unit, MetaType.STATE_VARIABLE)
+                        self.add_value(variable_labels_prefix + label, data, unit, MetaType.STATE_VARIABLE)
 
         else:  # binary file
             # TODO: Handle import somewhere else
@@ -401,15 +443,6 @@ class NeuronRecordingCreator(GeppettoRecordingCreator):
             vector = h.Vector()
             vector.vread(f)
             if vector:
-
-                # TODO: Do these sanity checks and add_value calls together with the ones for a text file
-                # Check if the number of data columns and variable labels match
-                if variable_labels is not None:
-                    if len(variable_labels) != 1:
-                        raise IndexError("Got {0} variable labels but found 1 data column(s)".format(len(variable_labels)))
-                else:
-                    variable_labels = ['unknown_variable_0']
-
                 # Check if the number of data columns and variable units match
                 if variable_units is not None:
                     if len(variable_units) != 1:
@@ -417,7 +450,18 @@ class NeuronRecordingCreator(GeppettoRecordingCreator):
                 else:
                     variable_units = ['unknown_unit']
 
-                self.add_value(variable_labels[0], vector.to_python(), 'float_', variable_units[0], MetaType.STATE_VARIABLE)
+                if time_column == 0:
+                    self.add_time(vector.to_python(), variable_units[0])
+                else:
+                    # TODO: Do these sanity checks and add_value calls together with the ones for a text file
+                    # Check if the number of data columns and variable labels match
+                    if variable_labels is not None:
+                        if len(variable_labels) != 1:
+                            raise IndexError("Got {0} variable labels but found 1 data column(s)".format(len(variable_labels)))
+                    else:
+                        variable_labels = ['unknown_variable_0']
+
+                    self.add_value(variable_labels[0], vector.to_python(), variable_units[0], MetaType.STATE_VARIABLE)
             else:
                 raise ValueError("Binary file is empty or could not be parsed: " + recording_file)
 
@@ -433,10 +477,10 @@ class NeuronRecordingCreator(GeppettoRecordingCreator):
         labels = []
 
         for section in h.allsec():
-            self.add_value(section.name() + '.L', section.L, 'float_', 'um', MetaType.PROPERTY)
+            self.add_value(section.name() + '.L', section.L, 'um', MetaType.PROPERTY)
             for segment in section:
                 segment_label = section.name() + '.segmentAt' + str(segment.x).replace('.', '_')
-                self.add_value(segment_label + '.diam', segment.diam, 'float_', 'um', MetaType.PROPERTY)
+                self.add_value(segment_label + '.diam', segment.diam, 'um', MetaType.PROPERTY)
                 vector_v = h.Vector()
                 vector_v.record(segment._ref_v)
                 vectors.append(vector_v)
@@ -460,9 +504,9 @@ class NeuronRecordingCreator(GeppettoRecordingCreator):
 
         for i, i_clamp in enumerate(i_clamps):
             label = 'i_clamp_' + str(i)
-            self.add_value(label + '.dur', i_clamp.dur, 'float_', 'ms', MetaType.PARAMETER)
-            self.add_value(label + '.del', i_clamp.delay, 'float_', 'ms', MetaType.PARAMETER)
-            self.add_value(label + '.amp', i_clamp.amp, 'float_', 'mA', MetaType.PARAMETER)
+            self.add_value(label + '.dur', i_clamp.dur, 'ms', MetaType.PARAMETER)
+            self.add_value(label + '.del', i_clamp.delay, 'ms', MetaType.PARAMETER)
+            self.add_value(label + '.amp', i_clamp.amp, 'mA', MetaType.PARAMETER)
             vector_i = h.Vector()
             vector_i.record(i_clamp._ref_i)
             vectors.append(vector_i)
@@ -491,10 +535,10 @@ class NeuronRecordingCreator(GeppettoRecordingCreator):
 
         for label, vector_v in zip(labels, vectors):
             # TODO: Extract unit
-            self.add_value(label, vector_v.to_python(), 'float_', 'unknown_unit', MetaType.STATE_VARIABLE)
+            self.add_value(label, vector_v.to_python(), 'unknown_unit', MetaType.STATE_VARIABLE)
 
         # TODO: Is time in NEURON always in ms?
-        self.add_variable_time_step_vector(time_vector.to_python(), 'ms')
+        self.add_time(time_vector.to_python(), 'ms')
 
 
 
@@ -547,9 +591,7 @@ class BrianRecordingCreator(GeppettoRecordingCreator):
         for index, spike_list in spikes.items():
             # TODO: Think about alternative naming for neuron
             path_string = path_string_prefix + 'neuron' + str(index) + '.spikes'
-            # TODO: Alter current format to support events (that do not need a timestep)
-            # TODO: Make MetaType.EVENT
-            self.add_value(path_string, spike_list, 'float_', 'ms', MetaType.STATE_VARIABLE)
+            self.add_value(path_string, spike_list, 'ms', MetaType.EVENT)
 
     def record_brian_model(self):
         raise NotImplementedError("I'm waiting for someone to implement me")

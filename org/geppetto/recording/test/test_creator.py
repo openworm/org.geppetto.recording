@@ -1,8 +1,6 @@
-__author__ = 'matteocantarelli'
-
-from org.geppetto.recording import GeppettoRecordingCreator, NeuronRecordingCreator, BrianRecordingCreator, MetaType
 import unittest
 import os
+from org.geppetto.recording import GeppettoRecordingCreator, NeuronRecordingCreator, BrianRecordingCreator, MetaType
 
 
 class RecordingCreatorTestCase(unittest.TestCase):
@@ -12,12 +10,10 @@ class RecordingCreatorTestCase(unittest.TestCase):
 
     def setUp(self):
         self.filenames = []
-        self.files = []
 
     def register_test_recording_creator(self, creator):
         """Register a test recording creator whose file will be removed after the tests if REMOVE_FILES_AFTER_TEST is set"""
-        self.filenames.append(creator.f.filename)
-        self.files.append(creator.f)
+        self.filenames.append(creator.filename)
 
     def assertAlmostEquals(self, first, second, places=None, msg=None, delta=None):
         """Extended assertAlmostEqual method that works with iterables"""
@@ -29,15 +25,15 @@ class RecordingCreatorTestCase(unittest.TestCase):
         else:
             unittest.TestCase.assertAlmostEquals(self, first, second, places, msg, delta)
 
-
     def test_fixed_timestep(self):
         c = GeppettoRecordingCreator('test_fixed_timestep.h5')
         self.register_test_recording_creator(c)
-        c.add_value('a.w', 1, 'float_', 'mV', MetaType.STATE_VARIABLE)
-        c.add_value('a.b.c.param', 1, 'float_', 'mV', MetaType.PARAMETER)
-        c.add_value('a.b.prop1', 1, 'float_', 'mV', MetaType.PROPERTY)
-        c.add_value('a.b.c.d', [1, 2, 3, 4, 5, 6], 'float_', 'mV', MetaType.STATE_VARIABLE)
-        c.add_fixed_time_step_vector(1, 'ms')
+        # TODO: Clean this up
+        c.add_value('a.w', 1, 'mV', MetaType.STATE_VARIABLE)
+        c.add_value('a.b.c.param', 1, 'mV', MetaType.PARAMETER)
+        c.add_value('a.b.prop1', 1, 'mV', MetaType.PROPERTY)
+        c.add_value('a.b.c.d', [1, 2, 3, 4, 5, 6], 'mV', MetaType.STATE_VARIABLE)
+        c.add_time(1, 'ms')
         c.add_metadata('string_metadata', 'description or link')
         c.add_metadata('float_metadata', 1.0)
         c.add_metadata('boolean_metadata', True)
@@ -46,11 +42,12 @@ class RecordingCreatorTestCase(unittest.TestCase):
     def test_variable_timestep(self):
         c = GeppettoRecordingCreator('test_variable_timestep.h5')
         self.register_test_recording_creator(c)
-        c.add_value('a.w', 1, 'float_', 'mV', MetaType.STATE_VARIABLE)
-        c.add_value('a.b.c.param', 1, 'float_', 'mV', MetaType.PARAMETER)
-        c.add_value('a.b.prop1', 1, 'float_', 'mV', MetaType.PROPERTY)
-        c.add_value('a.b.c.d', [1, 2, 3, 4, 5, 6], 'float_', 'mV', MetaType.STATE_VARIABLE)
-        c.add_variable_time_step_vector([0.1, 0.2, 0.5, 0.51, 0.52, 0.6, 0.7], 'ms')
+        # TODO: Clean this up
+        c.add_value('a.w', 1, 'mV', MetaType.STATE_VARIABLE)
+        c.add_value('a.b.c.param', 1, 'mV', MetaType.PARAMETER)
+        c.add_value('a.b.prop1', 1, 'mV', MetaType.PROPERTY)
+        c.add_value('a.b.c.d', [1, 2, 3, 4, 5, 6], 'mV', MetaType.STATE_VARIABLE)
+        c.add_time([0.1, 0.2, 0.5, 0.5, 0.6, 0.7], 'ms')
         c.add_metadata('string_metadata', 'description or link')
         c.create()
 
@@ -83,17 +80,15 @@ class RecordingCreatorTestCase(unittest.TestCase):
     def test_neuron_recording_binary(self):
         c = NeuronRecordingCreator('test_neuron_recording_binary.h5')
         self.register_test_recording_creator(c)
-        c.add_neuron_recording(os.path.join('neuron_recordings', 'binary_voltage.dat'), variable_labels='v')
+        c.add_neuron_recording(os.path.join('neuron_recordings', 'binary_voltage.dat'), variable_labels='v', variable_units='mV')
+        c.add_neuron_recording(os.path.join('neuron_recordings', 'binary_time.dat'), variable_labels='t', variable_units='ms', time_column=0)
         # TODO: Make test recording shorter and run assertEquals checks
-        # TODO: create does not work yet
-        c.f.close()
+        c.create()
 
     def test_neuron_recording_binary_corrupted(self):
         c = NeuronRecordingCreator('test_neuron_recording_binary_corrupted.h5')
         self.register_test_recording_creator(c)
         self.assertRaises(ValueError, c.add_neuron_recording, (os.path.join('neuron_recordings', 'binary_corrupted.dat')))
-        # TODO: create does not work yet
-        c.f.close()
 
     def test_neuron_model(self):
         c = NeuronRecordingCreator('test_neuron_model.h5')
@@ -110,8 +105,7 @@ class RecordingCreatorTestCase(unittest.TestCase):
         self.assertAlmostEquals(c.values['neuron2.spikes'], [0.0201, 0.0681])
         self.assertAlmostEquals(c.values['neuron3.spikes'], [0.0014, 0.0493])
         self.assertAlmostEquals(c.values['neuron4.spikes'], [0.0337])
-        # TODO: create does not work yet because events are not implemented
-        c.f.close()
+        c.create()
 
     def test_brian_recording_binary(self):
         c = BrianRecordingCreator('test_brian_recording_binary.h5')
@@ -122,18 +116,15 @@ class RecordingCreatorTestCase(unittest.TestCase):
         self.assertAlmostEquals(c.values['neuron2.spikes'], [0.0201, 0.0681])
         self.assertAlmostEquals(c.values['neuron3.spikes'], [0.0014, 0.0493])
         self.assertAlmostEquals(c.values['neuron4.spikes'], [0.0337])
-        # TODO: create does not work yet because events are not implemented
-        c.f.close()
+        c.create()
 
     def tearDown(self):
-        for f in self.files:
-            try:
-                f.close()
-            except Exception:
-                pass  # file is already closed
         if self.REMOVE_FILES_AFTER_TEST:
             for filename in self.filenames:
-                os.remove(filename)
+                try:
+                    os.remove(filename)
+                except WindowsError:
+                    pass
 
 if __name__ == '__main__':
     unittest.main()  # automatically executes all methods above that start with 'test_'
