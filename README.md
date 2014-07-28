@@ -11,4 +11,4 @@ Import one of the following recording creators from `org.geppetto.recording.crea
 
 * `BrianRecordingCreator`
 
-To represent the meta type of variables, please make also sure to implement the enum `MetaType`.
+To represent the meta type of variables, please make also sure to import the enum `MetaType`.
