@@ -26,7 +26,6 @@ def is_text_file(filepath):
 
 
 class RecordingCreator:
-    # TODO: Adapt docstring
     """
     This class allows to create a recording for Geppetto.
 

@@ -7,6 +7,9 @@ _brian_not_installed_error = ImportError("You have to install the brian package 
 
 
 class BrianRecordingCreator(RecordingCreator):
+    """
+    Work in progress...
+    """
 
     def __init__(self, filename):
         RecordingCreator.__init__(self, filename, 'Brian')
@@ -16,8 +19,10 @@ class BrianRecordingCreator(RecordingCreator):
         Read a file that contains a recording from the brian simulator and add its contents to the current recording.
         The file can be created using brian's FileSpikeMonitor or AERSpikeMonitor.
 
-        Keyword arguments:
-        recording_file -- path to the file that should be added
+        Parameters
+        ----------
+        recording_file : string
+            Path to the file that should be added
         """
 
         # TODO: Add exceptions if file can not be parsed

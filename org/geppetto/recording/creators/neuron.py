@@ -41,6 +41,9 @@ def func_on_iterable(iterable, func):
 
 
 class NeuronRecordingCreator(RecordingCreator):
+    """
+    Work in progress...
+    """
 
     def __init__(self, filename):
         RecordingCreator.__init__(self, filename, 'NEURON')
@@ -66,8 +69,10 @@ class NeuronRecordingCreator(RecordingCreator):
         Read a file that contains a recording from the NEURON simulator and add its contents to the current recording.
         The file can be created using NEURON's Graph and Vector GUI.
 
-        Keyword arguments:
-        recording_file -- path to the file that should be added
+        Parameters
+        ----------
+        recording_file : string
+            Path to the file that should be added
         """
 
         if variable_labels is not None and not hasattr(variable_labels, '__iter__'):
