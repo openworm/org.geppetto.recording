@@ -229,7 +229,7 @@ class NeuronRecordingCreator(RecordingCreator):
                             # TODO: Reconcile error messages
                             raise ValueError('The file \"{0}\" contains a different time step vector than the one already defined'.format(recording_file))
                     else:
-                        self.add_value(variable_labels_prefix + label, data, unit, MetaType.STATE_VARIABLE)
+                        self.add_values(variable_labels_prefix + label, data, unit, MetaType.STATE_VARIABLE)
 
         else:  # binary file
             # TODO: Handle import somewhere else
@@ -249,7 +249,7 @@ class NeuronRecordingCreator(RecordingCreator):
                 if time_column == 0:
                     self.add_time(vector.to_python(), variable_units[0])
                 else:
-                    # TODO: Do these sanity checks and add_value calls together with the ones for a text file
+                    # TODO: Do these sanity checks and add_values calls together with the ones for a text file
                     # Check if the number of data columns and variable labels match
                     if variable_labels is not None:
                         if len(variable_labels) != 1:
@@ -257,7 +257,7 @@ class NeuronRecordingCreator(RecordingCreator):
                     else:
                         variable_labels = ['unknown_variable_0']
 
-                    self.add_value(variable_labels[0], vector.to_python(), variable_units[0], MetaType.STATE_VARIABLE)
+                    self.add_values(variable_labels[0], vector.to_python(), variable_units[0], MetaType.STATE_VARIABLE)
             else:
                 raise ValueError("Binary file is empty or could not be parsed: " + recording_file)
 
@@ -273,10 +273,10 @@ class NeuronRecordingCreator(RecordingCreator):
         labels = []
 
         for section in h.allsec():
-            self.add_value(section.name() + '.L', section.L, 'um', MetaType.PROPERTY)
+            self.add_values(section.name() + '.L', section.L, 'um', MetaType.PROPERTY)
             for segment in section:
                 segment_label = section.name() + '.segmentAt' + str(segment.x).replace('.', '_')
-                self.add_value(segment_label + '.diam', segment.diam, 'um', MetaType.PROPERTY)
+                self.add_values(segment_label + '.diam', segment.diam, 'um', MetaType.PROPERTY)
                 vector_v = h.Vector()
                 vector_v.record(segment._ref_v)
                 vectors.append(vector_v)
@@ -300,9 +300,9 @@ class NeuronRecordingCreator(RecordingCreator):
 
         for i, i_clamp in enumerate(i_clamps):
             label = 'i_clamp_' + str(i)
-            self.add_value(label + '.dur', i_clamp.dur, 'ms', MetaType.PARAMETER)
-            self.add_value(label + '.del', i_clamp.delay, 'ms', MetaType.PARAMETER)
-            self.add_value(label + '.amp', i_clamp.amp, 'mA', MetaType.PARAMETER)
+            self.add_values(label + '.dur', i_clamp.dur, 'ms', MetaType.PARAMETER)
+            self.add_values(label + '.del', i_clamp.delay, 'ms', MetaType.PARAMETER)
+            self.add_values(label + '.amp', i_clamp.amp, 'mA', MetaType.PARAMETER)
             vector_i = h.Vector()
             vector_i.record(i_clamp._ref_i)
             vectors.append(vector_i)
@@ -331,7 +331,7 @@ class NeuronRecordingCreator(RecordingCreator):
 
         for label, vector_v in zip(labels, vectors):
             # TODO: Extract unit
-            self.add_value(label, vector_v.to_python(), 'unknown_unit', MetaType.STATE_VARIABLE)
+            self.add_values(label, vector_v.to_python(), 'unknown_unit', MetaType.STATE_VARIABLE)
 
         # TODO: Is time in NEURON always in ms?
         self.add_time(time_vector.to_python(), 'ms')

@@ -53,7 +53,7 @@ class BrianRecordingCreator(RecordingCreator):
         for index, spike_list in spikes.items():
             # TODO: Think about alternative naming for neuron
             path_string = path_string_prefix + 'neuron' + str(index) + '.spikes'
-            self.add_value(path_string, spike_list, 'ms', MetaType.EVENT)
+            self.add_values(path_string, spike_list, 'ms', MetaType.EVENT)
 
     def record_brian_model(self):
         raise NotImplementedError("I'm waiting for someone to implement me")

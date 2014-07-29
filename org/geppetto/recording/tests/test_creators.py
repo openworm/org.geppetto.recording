@@ -12,7 +12,7 @@ class RecordingCreatorTestCase(unittest.TestCase):
         self.filenames = []
 
     def register_test_recording_creator(self, creator):
-        """Register a test recording creator whose file will be removed after the tests if REMOVE_FILES_AFTER_TEST is set"""
+        """Register a tests recording creator whose file will be removed after the tests if REMOVE_FILES_AFTER_TEST is set"""
         self.filenames.append(creator.filename)
 
     def assertAlmostEquals(self, first, second, places=None, msg=None, delta=None):
@@ -29,10 +29,10 @@ class RecordingCreatorTestCase(unittest.TestCase):
         c = RecordingCreator('test_fixed_timestep.h5')
         self.register_test_recording_creator(c)
         # TODO: Clean this up
-        c.add_value('a.w', 1, 'mV', MetaType.STATE_VARIABLE)
-        c.add_value('a.b.c.param', 1, 'mV', MetaType.PARAMETER)
-        c.add_value('a.b.prop1', 1, 'mV', MetaType.PROPERTY)
-        c.add_value('a.b.c.d', [1, 2, 3, 4, 5, 6], 'mV', MetaType.STATE_VARIABLE)
+        c.add_values('a.w', 1, 'mV', MetaType.STATE_VARIABLE)
+        c.add_values('a.b.c.param', 1, 'mV', MetaType.PARAMETER)
+        c.add_values('a.b.prop1', 1, 'mV', MetaType.PROPERTY)
+        c.add_values('a.b.c.d', [1, 2, 3, 4, 5, 6], 'mV', MetaType.STATE_VARIABLE)
         c.add_time(1, 'ms')
         c.add_metadata('string_metadata', 'description or link')
         c.add_metadata('float_metadata', 1.0)
@@ -43,10 +43,10 @@ class RecordingCreatorTestCase(unittest.TestCase):
         c = RecordingCreator('test_variable_timestep.h5')
         self.register_test_recording_creator(c)
         # TODO: Clean this up
-        c.add_value('a.w', 1, 'mV', MetaType.STATE_VARIABLE)
-        c.add_value('a.b.c.param', 1, 'mV', MetaType.PARAMETER)
-        c.add_value('a.b.prop1', 1, 'mV', MetaType.PROPERTY)
-        c.add_value('a.b.c.d', [1, 2, 3, 4, 5, 6], 'mV', MetaType.STATE_VARIABLE)
+        c.add_values('a.w', 1, 'mV', MetaType.STATE_VARIABLE)
+        c.add_values('a.b.c.param', 1, 'mV', MetaType.PARAMETER)
+        c.add_values('a.b.prop1', 1, 'mV', MetaType.PROPERTY)
+        c.add_values('a.b.c.d', [1, 2, 3, 4, 5, 6], 'mV', MetaType.STATE_VARIABLE)
         c.add_time([0.1, 0.2, 0.5, 0.5, 0.6, 0.7], 'ms')
         c.add_metadata('string_metadata', 'description or link')
         c.create()
@@ -82,7 +82,7 @@ class RecordingCreatorTestCase(unittest.TestCase):
         self.register_test_recording_creator(c)
         c.add_neuron_recording(os.path.join('neuron_recordings', 'binary_voltage.dat'), variable_labels='v', variable_units='mV')
         c.add_neuron_recording(os.path.join('neuron_recordings', 'binary_time.dat'), variable_labels='t', variable_units='ms', time_column=0)
-        # TODO: Make test recording shorter and run assertEquals checks
+        # TODO: Make tests recording shorter and run assertEquals checks
         c.create()
 
     def test_neuron_recording_binary_corrupted(self):
