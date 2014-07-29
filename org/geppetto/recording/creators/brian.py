@@ -1,8 +1,9 @@
 from __future__ import absolute_import
 import numpy as np
-import brian
-
 from org.geppetto.recording.creators.base import RecordingCreator, MetaType, is_text_file
+
+
+_brian_not_installed_error = ImportError("You have to install the brian package to use this method")
 
 
 class BrianRecordingCreator(RecordingCreator):
@@ -35,6 +36,10 @@ class BrianRecordingCreator(RecordingCreator):
                     times[i] = float(line[colon+2:])
         else:  # binary format
             try:
+                import brian
+            except ImportError:
+                raise _brian_not_installed_error
+            try:
                 indices, times = brian.load_aer(recording_file)
             except Exception:
                 raise ValueError("Could not parse AER file: " + recording_file)
@@ -56,5 +61,9 @@ class BrianRecordingCreator(RecordingCreator):
             self.add_values(path_string, spike_list, 'ms', MetaType.EVENT)
 
     def record_brian_model(self):
+        try:
+            import brian
+        except ImportError:
+            raise _brian_not_installed_error
         raise NotImplementedError("I'm waiting for someone to implement me")
 

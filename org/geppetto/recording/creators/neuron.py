@@ -1,8 +1,9 @@
 from __future__ import absolute_import
 import numpy as np
-import neuron
-
 from org.geppetto.recording.creators.base import RecordingCreator, MetaType, is_text_file
+
+
+_neuron_not_installed_error = ImportError("You have to install the pyNEURON package to use this method")
 
 
 def split_by_separators(s, separators=(' ', ',', ';', '\t')):
@@ -232,8 +233,11 @@ class NeuronRecordingCreator(RecordingCreator):
                         self.add_values(variable_labels_prefix + label, data, unit, MetaType.STATE_VARIABLE)
 
         else:  # binary file
-            # TODO: Handle import somewhere else
-            from neuron import h
+            try:
+                import neuron
+                from neuron import h
+            except ImportError:
+                raise _neuron_not_installed_error
             f = h.File()
             f.ropen(recording_file)
             vector = h.Vector()
@@ -262,8 +266,11 @@ class NeuronRecordingCreator(RecordingCreator):
                 raise ValueError("Binary file is empty or could not be parsed: " + recording_file)
 
     def record_neuron_model(self, model_file, tstop=None, dt=None):
-        import neuron
-        from neuron import h
+        try:
+            import neuron
+            from neuron import h
+        except ImportError:
+            raise _neuron_not_installed_error
         # TODO: Currently, model_file must not contain sth like load_file("nrngui.hoc") because this hoc file cannot be found
         h.load_file(model_file.replace('\\', '/'))  # load_file needs slashes, also on Windows
 
