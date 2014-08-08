@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import numpy as np
-from org.geppetto.recording.creators.base import RecordingCreator, MetaType, is_text_file
+from org.geppetto.recording.creators.base import RecordingCreator, MetaType, is_text_file, make_iterable
 
 
 _neuron_not_installed_error = ImportError("You have to install the pyNEURON package to use this method")
@@ -64,7 +64,6 @@ class NeuronRecordingCreator(RecordingCreator):
         return s
 
     def add_neuron_recording(self, recording_file, variable_labels=None, variable_labels_prefix='', variable_units=None, time_column=None):
-        # TODO: Adapt docstring
         """
         Read a file that contains a recording from the NEURON simulator and add its contents to the current recording.
         The file can be created using NEURON's Graph and Vector GUI.
@@ -73,12 +72,20 @@ class NeuronRecordingCreator(RecordingCreator):
         ----------
         recording_file : string
             Path to the file that should be added
+        variable_labels : string or iterable of strings
+            The label(s) of the variable(s) in the recording. If None or empty, the labels are searched within the recording. The number of labels has to match the number of data columns in the recording.
+        variable_labels_prefix : string
+            A string to prepend to all variable labels. For example, `neuron0.` makes the variable `v` to `neuron0.v`.
+        variable_units : string or iterable of strings
+            The unit(s) of the variable(s) in the recording. If None or empty, `unknown_unit` is used. The number of units has to match the number of data columns in the recording.
+        time_column : int
+            The index of the data column in the recording that contains the time. If None, the time column is searched within the recording.
         """
 
-        if variable_labels is not None and not hasattr(variable_labels, '__iter__'):
-            variable_labels = [variable_labels]
-        if variable_units is not None and not hasattr(variable_units, '__iter__'):
-            variable_units = [variable_units]
+        if variable_units:
+            variable_units = make_iterable(variable_units)
+        if variable_labels:
+            variable_labels = make_iterable(variable_labels)
 
         if is_text_file(recording_file):  # text file
             with open(recording_file, 'r') as r:
@@ -130,15 +137,15 @@ class NeuronRecordingCreator(RecordingCreator):
                     i += 1
 
 
-                if variable_units is not None:
+                if variable_units:
                     # Check if the number of data columns and variable units match
                     if len(variable_units) != num_data_columns:
                         raise IndexError("Got {0} variable units but found {1} data column(s)".format(len(variable_units), num_data_columns))
                 else:
                     # Make list of placeholder variable units
-                    variable_units = ['unknown_unit'] * num_data_columns
+                    variable_units = ['unknownUnit'] * num_data_columns
 
-                if variable_labels is not None:
+                if variable_labels:
                     # Check if the number of data columns and variable labels match
                     if len(variable_labels) != num_data_columns:
                         raise IndexError("Got {0} variable labels but found {1} data column(s)".format(len(variable_labels), num_data_columns))
@@ -193,8 +200,9 @@ class NeuronRecordingCreator(RecordingCreator):
                         for i in range(len(variable_labels)):
                             variable_labels[i] = self._replace_location_indices(variable_labels[i])
                     else:
-                        # TODO: Handle numbers when multiple files with unknown variables are supplied
-                        variable_labels = ['unknown_variable_' + str(i) for i in range(num_data_columns)]
+                        variable_labels = []
+                        for i in range(num_data_columns):
+                            variable_labels.append('unknownVariable' + str(self.next_free_index('unknownVariable')))
                 print 'final labels:', variable_labels
 
                 # Search for a label containing 'time' and select it as the time column
@@ -249,22 +257,22 @@ class NeuronRecordingCreator(RecordingCreator):
             vector.vread(f)
             if vector:
                 # Check if the number of data columns and variable units match
-                if variable_units is not None:
+                if variable_units:
                     if len(variable_units) != 1:
                         raise IndexError("Got {0} variable units but found 1 data column(s)".format(len(variable_labels)))
                 else:
-                    variable_units = ['unknown_unit']
+                    variable_units = ['unknownUnit']
 
                 if time_column == 0:
                     self.add_time(vector.to_python(), variable_units[0])
                 else:
                     # TODO: Do these sanity checks and add_values calls together with the ones for a text file
                     # Check if the number of data columns and variable labels match
-                    if variable_labels is not None:
+                    if variable_labels:
                         if len(variable_labels) != 1:
                             raise IndexError("Got {0} variable labels but found 1 data column(s)".format(len(variable_labels)))
                     else:
-                        variable_labels = ['unknown_variable_0']
+                        variable_labels = ['unknownVariable' + str(self.next_free_index('unknownVariable'))]
 
                     self.add_values(variable_labels[0], vector.to_python(), variable_units[0], MetaType.STATE_VARIABLE)
             else:

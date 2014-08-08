@@ -25,6 +25,14 @@ def is_text_file(filepath):
             return True
 
 
+def make_iterable(object):
+    """Return a list that holds the object, or the object itself if it is already iterable."""
+    if hasattr(object, '__iter__'):
+        return object
+    else:
+        return [object]
+
+
 class RecordingCreator:
     """
     This class allows to create a recording for Geppetto.
@@ -180,3 +188,13 @@ class RecordingCreator:
         # TODO: Have the logic from _process_added_values in here?
         self._process_added_values(f)
         f.close()
+
+    def exists(self, variable_label):
+        return variable_label in self.values
+
+    def next_free_index(self, label):
+        """Return the next index for which the variable `label + str(index)` does not exist yet."""
+        i = 0
+        while self.exists(label + str(i)):
+            i += 1
+        return 1

@@ -14,7 +14,8 @@ class BrianRecordingCreator(RecordingCreator):
     def __init__(self, filename):
         RecordingCreator.__init__(self, filename, 'Brian')
 
-    def add_brian_recording(self, recording_file, path_string_prefix=''):
+    def add_brian_recording(self, recording_file, neuron_group_label=None):
+        # TODO: Use variable_labels_prefix instead of neuron_group_label?
         """
         Read a file that contains a recording from the brian simulator and add its contents to the current recording.
         The file can be created using brian's FileSpikeMonitor or AERSpikeMonitor.
@@ -23,6 +24,8 @@ class BrianRecordingCreator(RecordingCreator):
         ----------
         recording_file : string
             Path to the file that should be added
+        neuron_group_label : string
+            Label for the neuron group of these values. If supplied, the values will be stored as `neuron_group_label.neuron123.spikes`, otherwise as `neuron123.spikes`, for example.
         """
 
         # TODO: Add exceptions if file can not be parsed
@@ -62,8 +65,10 @@ class BrianRecordingCreator(RecordingCreator):
 
         for index, spike_list in spikes.items():
             # TODO: Think about alternative naming for neuron
-            path_string = path_string_prefix + 'neuron' + str(index) + '.spikes'
-            self.add_values(path_string, spike_list, 'ms', MetaType.EVENT)
+            neuron_label = 'neuron' + str(index) + '.spikes'
+            if neuron_group_label:
+                neuron_label = neuron_group_label + '.' + neuron_label
+            self.add_values(neuron_label, spike_list, 'ms', MetaType.EVENT)
 
     def record_brian_model(self):
         try:
