@@ -72,7 +72,7 @@ class BrianRecordingCreator(RecordingCreator):
                 neuron_label = neuron_group_label + '.' + neuron_label
             self.add_values(neuron_label, spike_list, 'ms', MetaType.EVENT)
 
-    def record_brian_model(self, model_file, temp_file='temp_model.py', overwrite_temp_file=True, remove_temp_file=False):
+    def record_brian_model(self, model_file, temp_file='temp_model.py', overwrite_temp_file=True, remove_temp_file=True):
         try:
             import brian
             from brian import Network, NeuronGroup, SpikeMonitor, MultiStateMonitor
@@ -188,3 +188,6 @@ def add_monitors_to_all_networks(variables_dict):
                 print 'Added variable:', variable_name
 
         print 'Time to populate file:', time.time() - start_time
+
+        if remove_temp_file:
+            os.remove(temp_file)
