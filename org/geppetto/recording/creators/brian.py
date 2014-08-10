@@ -73,6 +73,8 @@ class BrianRecordingCreator(RecordingCreator):
             self.add_values(neuron_label, spike_list, 'ms', MetaType.EVENT)
 
     def record_brian_model(self, model_file, temp_file='temp_model.py', overwrite_temp_file=True, remove_temp_file=True):
+        # TODO: Include runtime and timestep to run the model from outside.
+
         try:
             import brian
             from brian import Network, NeuronGroup, SpikeMonitor, MultiStateMonitor
@@ -163,6 +165,9 @@ def add_monitors_to_all_networks(variables_dict):
         spike_monitors = vars['spike_monitors']
         multi_state_monitors = vars['multi_state_monitors']
 
+        if remove_temp_file:
+            os.remove(temp_file)
+
         # print 'Found {0} neuron group(s) in total'.format(len(monitored_groups))
         # for name_neuron_group, group in monitored_groups.items():
         #     print '    {0} with {1} neurons'.format(name_neuron_group, len(group))
@@ -189,5 +194,3 @@ def add_monitors_to_all_networks(variables_dict):
 
         print 'Time to populate file:', time.time() - start_time
 
-        if remove_temp_file:
-            os.remove(temp_file)
