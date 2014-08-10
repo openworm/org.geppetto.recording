@@ -5,6 +5,8 @@ import string
 from enum import Enum
 
 # TODO: Make clear in the docs what these mean and especially what the difference between PARAMETER and PROPERTY is
+import time
+
 MetaType = Enum('STATE_VARIABLE', 'PARAMETER', 'PROPERTY', 'EVENT')
 
 
@@ -110,16 +112,17 @@ class RecordingCreator:
             # TODO: Use numpy arrays instead? -> Check performance of extending numpy arrays vs python lists
             self.values[label] = []
         if hasattr(values, '__iter__') and not is_single_value:
-            self.values.get(label).extend(values)
+            # TODO: This can cause a MemoryError for many steps and 32-bit versions of Python (depending on the OS, there are only 1 to 4 GB of memory available).
+            # TODO: Possible solution: Flush values to hdf5 file if they extend a certain size.
+            self.values[label].extend(values)
         else:
-            self.values.get(label).append(values)
+            self.values[label].append(values)
         self.units[label] = unit
         self.meta_types[label] = meta_type
 
     def add_time(self, time_step_or_vector, unit):
-        print time_step_or_vector
         if self.time is not None:
-            raise RuntimeError("Time has already been defined previously")
+            raise RuntimeError("Time has already been defined")
         if not unit:
             raise ValueError("The time unit cannot be empty")
         if time_step_or_vector is None:
@@ -136,16 +139,6 @@ class RecordingCreator:
         for name, value in self.metadata.iteritems():
             f.attrs[name] = value
 
-        # TODO: Should the number of steps in the state variables match (with each other and with the time vector) or should it only be smaller than the time vector?
-        # num_steps = None
-        # for label in self.values.keys():
-        #     if self.meta_types[label] == MetaType.STATE_VARIABLE:
-        #         if num_steps is None:
-        #             num_steps = len(self.values[label])
-        #         else:
-        #             if len(self.values[label]) != num_steps:
-        #                 raise IndexError("The number of steps in the state variables do not match")
-
         max_num_steps = 0
         for label in self.values.keys():
             if self.meta_types[label] == MetaType.STATE_VARIABLE:
@@ -156,8 +149,8 @@ class RecordingCreator:
             if self.time is None:
                 raise RuntimeError("There are state variables but no time is defined, call add_time")
             if is_time_vector:
-                if len(self.time) != max_num_steps:
-                    raise IndexError("The number of steps in the time vector and in the state variables do not match")
+                if len(self.time) < max_num_steps:
+                    raise IndexError("The number of steps in the time vector is smaller than the number of values in the state variables")
             else:  # fixed time step
                 self.time = np.linspace(0, max_num_steps * self.time, max_num_steps, endpoint=False)
             f['time'] = self.time
@@ -186,7 +179,10 @@ class RecordingCreator:
             os.remove(self.filename)
         f = h5py.File(self.filename, 'w-')  # create file here to avoid an empty file if an error occurs
         # TODO: Have the logic from _process_added_values in here?
+        print 'Writing file...'
+        start_time = time.time()
         self._process_added_values(f)
+        print 'Time to write file:', time.time() - start_time
         f.close()
 
     def exists(self, variable_label):

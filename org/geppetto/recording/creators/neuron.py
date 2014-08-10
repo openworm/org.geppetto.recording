@@ -33,13 +33,6 @@ def split_by_separators(s, separators=(' ', ',', ';', '\t')):
     return substrings
 
 
-def func_on_iterable(iterable, func):
-    """Invoke a function on every item in an iterable and return it."""
-    for i in range(len(iterable)):
-        iterable[i] = func(iterable[i])
-    return iterable
-
-
 class NeuronRecordingCreator(RecordingCreator):
     """
     Work in progress...
@@ -117,7 +110,7 @@ class NeuronRecordingCreator(RecordingCreator):
                     items = split_by_separators(line)
                     #print 'items:', items
                     try:
-                        items = func_on_iterable(items, float)
+                        items = map(float, items)
                         is_data_line = True
                     except ValueError:  # this is not a data line
                         is_data_line = False
@@ -222,7 +215,7 @@ class NeuronRecordingCreator(RecordingCreator):
                     # TODO: Use extract_numbers function instead?
                     items = split_by_separators(line)
                     try:
-                        numbers = func_on_iterable(items, float)
+                        numbers = map(float, items)
                     except ValueError:
                         # TODO: Raise ValueError that shows both the filename and the specific item that could not be cast (not the complete list)
                         raise TypeError("Could not cast {0} to float: ".format(items) + recording_file)

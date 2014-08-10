@@ -118,6 +118,13 @@ class RecordingCreatorTestCase(unittest.TestCase):
         self.assertAlmostEquals(c.values['neuron4.spikes'], [0.0337])
         c.create()
 
+    def test_brian_model(self):
+        c = BrianRecordingCreator('test_brian_model.h5')
+        self.register_test_recording_creator(c)
+        c.record_brian_model(os.path.join('brian_models', 'tutorial_model.py'))
+        # TODO: make short, deterministic model and run assertEquals
+        c.create()
+
     def tearDown(self):
         if self.REMOVE_FILES_AFTER_TEST:
             for filename in self.filenames:
