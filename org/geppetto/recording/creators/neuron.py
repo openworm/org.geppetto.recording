@@ -309,7 +309,10 @@ class NeuronRecordingCreator(RecordingCreator):
         # TODO: Synapses
         h('objref listIClamps')
         h('listIClamps = new List("IClamp")')
+
+        # TODO: This terminates Python if there are no iclamps present
         i_clamps = h.listIClamps
+
 
         for i, i_clamp in enumerate(i_clamps):
             label = 'i_clamp_' + str(i)
@@ -322,6 +325,8 @@ class NeuronRecordingCreator(RecordingCreator):
             #print i_clamp.Section
             # TODO: Get i_clamp name
             labels.append(label + '.i')
+
+        print 'set up iclamps'
 
         # TODO: Search for  run command in model file? -> execute the code before it, then attach vectors and execute the rest
         # TODO: Describe this behaviour in the docstring

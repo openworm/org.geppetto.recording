@@ -1,3 +1,5 @@
+load_file("nrngui.hoc")
+
 num_dendrites = 2
 create soma, dendrites[num_dendrites]
 access soma
@@ -46,3 +48,5 @@ stimulus.dur = 100
 stimulus.amp = 0.1
 
 tstop = 300
+
+run()

@@ -1,0 +1,51 @@
+DESCRIPTION AND USAGE NOTES
+
+of the NEURON benchmark models for Brette et al (2006) 
+Simulation of networks of spiking neurons: 
+a review of tools and strategies.
+
+Autolaunching requires version 5.9.30 or higher.
+To manually run from the mosinit.hoc file under Linux or Mac OS X,
+in the directory containing the mosinit.hoc file run
+    nrnivmodl coba cuba cubadv
+    nrngui mosinit.hoc
+Alternatively, each model can be run from within its subdirectory 
+(after linking the model specific mod file). In that case, to view 
+the intrinsic cell properties, use
+    nrngui intrinsic.hoc
+and to run the network simulation use
+    nrngui init.hoc
+The latter will produce an out.dat file which can be viewed with
+    nrngui ../common/spkplt.hoc
+Performance information is appended to the perf.dat file.
+
+The network simulations are ready to run, without modification, on 
+individual single processor machines, or on parallel cluster machines 
+under MPI.
+
+
+PROGRAM IMPLEMENTATION NOTES
+
+All four benchmark models have the same network structure, so the 
+code that sets this up has been factored into a directory called 
+common.  The "instrumentation code," which displays simulation 
+results and gathers and reports performance information, is also 
+shared across the models; it too has been placed in the common 
+directory.
+
+The models differ with respect to the properties of their constituent 
+cells, and how these cells are affected by synaptic inputs.  Cell-
+specific code has been factored into directores called coba, cobahh, 
+cuba, and cubadv.
+
+Comments have been inserted into the source code at selected points to 
+aid those who wish to pursue the implementational strategy more closely.  
+Syntax and usage of hoc and NMODL are detailed in the Programmer's 
+Reference (http://www.neuron.yale.edu/neuron/docs/help/contents.html)
+and chapters 5, 6, and 9-13 of The NEURON Book (Carnevale and Hines, 
+Cambridge: Cambridge University Press, 2006).
+
+REVISIONS
+
+20110805 Ted Carnevale corrected the synaptic time constants for the 
+NEURON implemetation of the coba model (see coba/cobacell.hoc).

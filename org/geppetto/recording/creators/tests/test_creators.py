@@ -93,7 +93,7 @@ class RecordingCreatorTestCase(unittest.TestCase):
     def test_neuron_model(self):
         c = NeuronRecordingCreator('test_neuron_model.h5')
         self.register_test_recording_creator(c)
-        c.record_neuron_model(os.path.join('neuron_models', 'sthB.hoc'), tstop=0.05, dt=0.025)
+        c.record_neuron_model(os.path.join('neuron_models', 'sthB.hoc'))#, tstop=0.05, dt=0.025)
         c.create()
 
     def test_brian_recording_text(self):

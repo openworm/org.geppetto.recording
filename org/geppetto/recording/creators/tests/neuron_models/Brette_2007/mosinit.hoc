@@ -1,0 +1,39 @@
+//moddir coba cuba cubadv
+// Previous line is a directive to mos2nrn,
+// which is called when this file is executed from a browser.
+// It ensures compilation of mod files in coba, cuba, and cubadv.
+{load_file("nrngui.hoc")}
+
+// This variable controls reporting of results.
+// mosinit==1 if the user executes mosinit.hoc, 
+//   0 if the user executes any of the celltype/init.hoc files directly.
+// If mosinit==1, the selected simulation runs in a "demo" mode,
+//   periodically printing reports to the xterm, and updating a raster plot.
+// If mosinit==0, the simulation runs in "industrial" mode, omitting periodic reports,
+//   but writing final performance and spike time data to output files
+mosinit=1
+
+mosinvl = 100
+proc launch() {
+	PWManager[0].hide(1)
+	chdir($s1)
+	if ($2) {
+		load_file("intrinsic.hoc")
+		run()
+	}else{
+		load_file("init.hoc")
+	}
+}
+
+// Create a panel that offers a menu of different kinds of simulations
+{intrin = 1 netsim = 0}
+{
+xpanel("Launch")
+xcheckbox("intrinsic cell behavior", &intrin, "intrin=1  netsim=0")
+xcheckbox("network simulation", &netsim, "intrin=0 netsim=1")
+xbutton("CobaHH", "mosinvl = 10 launch(\"cobahh\", intrin)")
+xbutton("Coba", "mosinvl = 10 launch(\"coba\", intrin)")
+xbutton("Cuba", "launch(\"cuba\", intrin)")
+xbutton("CubaDV", "launch(\"cubadv\", intrin)")
+xpanel()
+}
