@@ -49,4 +49,4 @@ stimulus.amp = 0.1
 
 tstop = 300
 
-run()
+//run()
