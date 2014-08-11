@@ -74,6 +74,7 @@ class NeuronRecordingCreator(RecordingCreator):
         time_column : int
             The index of the data column in the recording that contains the time. If None, the time column is searched within the recording.
         """
+        self._assert_is_not_created()
 
         if variable_units:
             variable_units = make_iterable(variable_units)
@@ -195,7 +196,7 @@ class NeuronRecordingCreator(RecordingCreator):
                     else:
                         variable_labels = []
                         for i in range(num_data_columns):
-                            variable_labels.append('unknownVariable' + str(self.next_free_index('unknownVariable')))
+                            variable_labels.append('unknownVariable' + str(self._next_free_index('unknownVariable')))
                 print 'final labels:', variable_labels
 
                 # Search for a label containing 'time' and select it as the time column
@@ -265,13 +266,15 @@ class NeuronRecordingCreator(RecordingCreator):
                         if len(variable_labels) != 1:
                             raise IndexError("Got {0} variable labels but found 1 data column(s)".format(len(variable_labels)))
                     else:
-                        variable_labels = ['unknownVariable' + str(self.next_free_index('unknownVariable'))]
+                        variable_labels = ['unknownVariable' + str(self._next_free_index('unknownVariable'))]
 
                     self.add_values(variable_labels[0], vector.to_python(), variable_units[0], MetaType.STATE_VARIABLE)
             else:
                 raise ValueError("Binary file is empty or could not be parsed: " + recording_file)
+        return self
 
     def record_neuron_model(self, model_file, tstop=None, dt=None):
+        self._assert_is_not_created()
         try:
             import neuron
             from neuron import h
@@ -353,4 +356,4 @@ class NeuronRecordingCreator(RecordingCreator):
 
         # TODO: Is time in NEURON always in ms?
         self.add_time(time_vector.to_python(), 'ms')
-
+        return self

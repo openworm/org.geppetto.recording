@@ -25,7 +25,7 @@ Create a recording
 There are several options to create a recording file: You can do the handwork (supplying values, units, etc) on your own, or you can use one of our super-handy functions to create a Geppetto recording right from recordings or models from the NEURON or Brian simulator.
 In every case, you need to import some of these from ``org.geppetto.recording.creators``:
 
-* ``RecordingCreator`` The base class to write a recording for Geppetto. You can add variables and values, define a time step vector (fixed or variable) and add metadata for the recording. Call the ``create`` method to write everything to an HDF5 file.
+* ``RecordingCreator`` The base class to write a recording for Geppetto. You can add variables and values, define a time step vector (fixed or variable) and add metadata for the recording.
 
 * ``NeuronRecordingCreator`` Add recordings from the NEURON simulator or run and record a NEURON model (hoc file).
 

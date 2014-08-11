@@ -29,6 +29,7 @@ class BrianRecordingCreator(RecordingCreator):
         neuron_group_label : string
             Label for the neuron group of these values. If supplied, the values will be stored as `neuron_group_label.neuron123.spikes`, otherwise as `neuron123.spikes`, for example.
         """
+        self._assert_is_not_created()
 
         # TODO: Add exceptions if file can not be parsed
         if is_text_file(recording_file):
@@ -71,8 +72,10 @@ class BrianRecordingCreator(RecordingCreator):
             if neuron_group_label:
                 neuron_label = neuron_group_label + '.' + neuron_label
             self.add_values(neuron_label, spike_list, 'ms', MetaType.EVENT)
+        return self
 
     def record_brian_model(self, model_file, temp_file='temp_model.py', overwrite_temp_file=True, remove_temp_file=True):
+        self._assert_is_not_created()
         # TODO: Include runtime and timestep to run the model from outside.
 
         try:
@@ -133,7 +136,7 @@ def add_monitors_to_all_networks(variables_dict):
         # TODO: Find out subgroups and store their neurons under different labels
 
         if os.path.exists(temp_file) and not overwrite_temp_file:
-            raise IOError("Temporary file already exists, set the overwrite flag to proceed")
+            raise IOError("Temporary file already _exists, set the overwrite flag to proceed")
 
         # Create a temporary file that contains the model and some additions to set up the monitors for recording.
         with open(temp_file, 'w') as temp:
@@ -193,4 +196,5 @@ def add_monitors_to_all_networks(variables_dict):
                 print 'Added variable:', variable_name
 
         print 'Time to populate file:', time.time() - start_time
+        return self
 

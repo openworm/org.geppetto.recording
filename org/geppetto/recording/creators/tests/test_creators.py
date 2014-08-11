@@ -125,6 +125,12 @@ class RecordingCreatorTestCase(unittest.TestCase):
         # TODO: make short, deterministic model and run assertEquals
         c.create()
 
+    def test_add_after_create(self):
+        c = BrianRecordingCreator('test_add_after_create.h5')
+        self.register_test_recording_creator(c)
+        c.create()
+        self.assertRaises(IOError, c.add_metadata, 'meta', 'data')
+
     def tearDown(self):
         if self.REMOVE_FILES_AFTER_TEST:
             for filename in self.filenames:

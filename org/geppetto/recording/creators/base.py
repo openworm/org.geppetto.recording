@@ -85,7 +85,7 @@ class RecordingCreator:
                 if overwrite:
                     self.remove_previous_file = True
                 else:
-                    raise IOError("File already exists, set the overwrite flag to remove it before writing: " + filename)
+                    raise IOError("File already _exists, set the overwrite flag to remove it before writing: " + filename)
             else:  # directory
                 raise IOError("Filename points to a directory: " + filename)
 
@@ -98,9 +98,15 @@ class RecordingCreator:
         self.time_unit = None
         self.simulator = simulator
         self.metadata = {}
+        self.created = False
+
+    def _assert_is_not_created(self):
+        if self.created:
+            raise IOError("The recording file has already been created, do this before you call create()")
 
     def add_values(self, label, values, unit, meta_type, is_single_value=False):
         """Add one or multiple values to the variable `label`."""
+        self._assert_is_not_created()
         if not label:
             raise ValueError("Label is empty")
         if meta_type not in MetaType:
@@ -119,8 +125,10 @@ class RecordingCreator:
             self.values[label].append(values)
         self.units[label] = unit
         self.meta_types[label] = meta_type
+        return self
 
     def add_time(self, time_step_or_vector, unit):
+        self._assert_is_not_created()
         if self.time is not None:
             raise RuntimeError("Time has already been defined")
         if not unit:
@@ -133,6 +141,7 @@ class RecordingCreator:
             raise ValueError("The time vector cannot be empty")
         self.time = time_step_or_vector  # will be parsed in _process_added_values
         self.time_unit = unit
+        return self
 
     def _process_added_values(self, f):
         f.attrs['simulator'] = self.simulator
@@ -168,13 +177,16 @@ class RecordingCreator:
                 raise ValueError("Cannot write dataset for variable " + label)
 
     def add_metadata(self, name, value):
+        self._assert_is_not_created()
         if not name:
             raise Exception('Supply a name and be a good boy')
         if value is None:  # empty metadata, for example to set a flag
             value = ''
         self.metadata[name] = value
+        return self
 
     def create(self):
+        self._assert_is_not_created()
         if self.remove_previous_file:
             os.remove(self.filename)
         f = h5py.File(self.filename, 'w-')  # create file here to avoid an empty file if an error occurs
@@ -184,13 +196,15 @@ class RecordingCreator:
         self._process_added_values(f)
         print 'Time to write file:', time.time() - start_time
         f.close()
+        self.created = True
+        # TODO: Give error on any further method calls
 
-    def exists(self, variable_label):
+    def _exists(self, variable_label):
         return variable_label in self.values
 
-    def next_free_index(self, label):
+    def _next_free_index(self, label):
         """Return the next index for which the variable `label + str(index)` does not exist yet."""
         i = 0
-        while self.exists(label + str(i)):
+        while self._exists(label + str(i)):
             i += 1
         return 1
