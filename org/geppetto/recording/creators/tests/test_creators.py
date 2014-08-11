@@ -33,7 +33,7 @@ class RecordingCreatorTestCase(unittest.TestCase):
         c.add_values('a.b.c.param', 1, 'mV', MetaType.PARAMETER)
         c.add_values('a.b.prop1', 1, 'mV', MetaType.PROPERTY)
         c.add_values('a.b.c.d', [1, 2, 3, 4, 5, 6], 'mV', MetaType.STATE_VARIABLE)
-        c.add_time(1, 'ms')
+        c.set_time_step(1, 'ms')
         c.add_metadata('string_metadata', 'description or link')
         c.add_metadata('float_metadata', 1.0)
         c.add_metadata('boolean_metadata', True)
@@ -47,7 +47,7 @@ class RecordingCreatorTestCase(unittest.TestCase):
         c.add_values('a.b.c.param', 1, 'mV', MetaType.PARAMETER)
         c.add_values('a.b.prop1', 1, 'mV', MetaType.PROPERTY)
         c.add_values('a.b.c.d', [1, 2, 3, 4, 5, 6], 'mV', MetaType.STATE_VARIABLE)
-        c.add_time([0.1, 0.2, 0.5, 0.5, 0.6, 0.7], 'ms')
+        c.add_time_points([0.1, 0.2, 0.5, 0.5, 0.6, 0.7], 'ms')
         c.add_metadata('string_metadata', 'description or link')
         c.create()
 
@@ -57,7 +57,7 @@ class RecordingCreatorTestCase(unittest.TestCase):
         c.add_neuron_recording(os.path.join('neuron_recordings', 'text_from_gui.dat'), variable_units=['ms', 'mV'])#text_time.dat')#
         self.assertAlmostEquals(c.values['soma.segmentAt0_5.v'], [-65, -65.0156, -65.0244, -65.0285])
         self.assertEqual(c.units['soma.segmentAt0_5.v'], 'mV')
-        self.assertAlmostEquals(c.time, [0, 0.025, 0.05, 0.075])
+        self.assertAlmostEquals(c.time_points, [0, 0.025, 0.05, 0.075])
         self.assertEqual(c.time_unit, 'ms')
         c.create()
 
@@ -70,7 +70,7 @@ class RecordingCreatorTestCase(unittest.TestCase):
         self.assertAlmostEquals(c.values['segment.ica_capump'], [0, 0])
         self.assertAlmostEquals(c.values['segment.ica_cachan'], [-0.000142564, -0.000142564])
         self.assertAlmostEquals(c.values['segment.ica_pmp_cadifpmp'], [0, 0.00083607])
-        self.assertAlmostEquals(c.time, [0, 0.025])
+        self.assertAlmostEquals(c.time_points, [0, 0.025])
         c.create()
 
     def text_neuron_recording_text_3(self):

@@ -9,7 +9,7 @@ _neuron_not_installed_error = ImportError("You have to install the pyNEURON pack
 def split_by_separators(s, separators=(' ', ',', ';', '\t')):
     """Split a string by various separators (or any combination of them) and return the non-empty substrings as a list."""
     if not hasattr(separators, '__iter__'):
-        separators = (separators, )
+        separators = make_iterable(separators)
 
     substrings = []
 
@@ -74,7 +74,7 @@ class NeuronRecordingCreator(RecordingCreator):
         time_column : int
             The index of the data column in the recording that contains the time. If None, the time column is searched within the recording.
         """
-        self._assert_is_not_created()
+        self._assert_not_created()
 
         if variable_units:
             variable_units = make_iterable(variable_units)
@@ -232,7 +232,7 @@ class NeuronRecordingCreator(RecordingCreator):
                     if i == time_column:
                         # TODO: Maybe check this in add_variable_time_step_vector
                         try:
-                            self.add_time(data, unit)
+                            self.add_time_points(data, unit)
                         except RuntimeError:
                             # TODO: Reconcile error messages
                             raise ValueError('The file \"{0}\" contains a different time step vector than the one already defined'.format(recording_file))
@@ -258,7 +258,7 @@ class NeuronRecordingCreator(RecordingCreator):
                     variable_units = ['unknownUnit']
 
                 if time_column == 0:
-                    self.add_time(vector.to_python(), variable_units[0])
+                    self.add_time_points(vector.to_python(), variable_units[0])
                 else:
                     # TODO: Do these sanity checks and add_values calls together with the ones for a text file
                     # Check if the number of data columns and variable labels match
@@ -274,7 +274,7 @@ class NeuronRecordingCreator(RecordingCreator):
         return self
 
     def record_neuron_model(self, model_file, tstop=None, dt=None):
-        self._assert_is_not_created()
+        self._assert_not_created()
         try:
             import neuron
             from neuron import h
@@ -355,5 +355,5 @@ class NeuronRecordingCreator(RecordingCreator):
             self.add_values(label, vector_v.to_python(), 'unknown_unit', MetaType.STATE_VARIABLE)
 
         # TODO: Is time in NEURON always in ms?
-        self.add_time(time_vector.to_python(), 'ms')
+        self.add_time_points(time_vector.to_python(), 'ms')
         return self

@@ -29,7 +29,7 @@ class BrianRecordingCreator(RecordingCreator):
         neuron_group_label : string
             Label for the neuron group of these values. If supplied, the values will be stored as `neuron_group_label.neuron123.spikes`, otherwise as `neuron123.spikes`, for example.
         """
-        self._assert_is_not_created()
+        self._assert_not_created()
 
         # TODO: Add exceptions if file can not be parsed
         if is_text_file(recording_file):
@@ -38,7 +38,7 @@ class BrianRecordingCreator(RecordingCreator):
                 r.close()
 
                 lines = file_content.splitlines()
-                # Extract indices and spike times in a similar manner to brian.load_aer() below
+                # Extract indices and spike time_points in a similar manner to brian.load_aer() below
                 indices = np.empty(len(lines), dtype='int')
                 times = np.empty(len(lines))
                 for i, line in enumerate(lines):
@@ -75,7 +75,7 @@ class BrianRecordingCreator(RecordingCreator):
         return self
 
     def record_brian_model(self, model_file, temp_file='temp_model.py', overwrite_temp_file=True, remove_temp_file=True):
-        self._assert_is_not_created()
+        self._assert_not_created()
         # TODO: Include runtime and timestep to run the model from outside.
 
         try:
@@ -136,7 +136,7 @@ def add_monitors_to_all_networks(variables_dict):
         # TODO: Find out subgroups and store their neurons under different labels
 
         if os.path.exists(temp_file) and not overwrite_temp_file:
-            raise IOError("Temporary file already _exists, set the overwrite flag to proceed")
+            raise IOError("Temporary file already _variable_exists, set the overwrite flag to proceed")
 
         # Create a temporary file that contains the model and some additions to set up the monitors for recording.
         with open(temp_file, 'w') as temp:
@@ -182,9 +182,9 @@ def add_monitors_to_all_networks(variables_dict):
                 self.add_values(name_neuron_group + '.neuron' + str(neuron_index) + '.spikes', spike_times, 'ms', MetaType.EVENT)
 
         for name_neuron_group, multi_state_monitor in multi_state_monitors.iteritems():
-            if self.time is None:
-                self.add_time(multi_state_monitor.times / brian.ms, 'ms')
-            elif any(self.time != state_monitor.times):
+            if self.time_points is None:
+                self.add_time_points(multi_state_monitor.times / brian.ms, 'ms')
+            elif any(self.time_points != state_monitor.times):
                 raise ValueError("Your model contains multiple time vectors, this is not supported yet by the Geppetto recording format.")
             for variable_name, state_monitor in multi_state_monitor.iteritems():
                 # TODO: Iterating over the state monitor can cause a MemoryError for many steps and 32-bit versions of Python. Iterating over state_monitor._values solves this, but does not give the correct number of values.
