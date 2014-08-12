@@ -4,11 +4,11 @@ sys.path.insert(0, os.path.abspath('..'))
 from org.geppetto.recording.creators import NeuronRecordingCreator, BrianRecordingCreator
 
 help = """Usage:
-record -neuron modelfile.hoc [recordingfile.h5]
+python record.py -neuron modelfile.hoc [recordingfile.h5]
     Execute a NEURON model (only hoc at the moment!) and store the simulation data to a Geppetto recording.
-record -brian modelfile.py [recordingfile.h5]
+python record.py -brian modelfile.py [recordingfile.h5]
     Execute a Brian model and store the simulation data to a Geppetto recording.
-record help
+python record.py help
     Show this help message."""
 
 
