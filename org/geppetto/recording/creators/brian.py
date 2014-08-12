@@ -43,47 +43,36 @@ class BrianRecordingCreator(RecordingCreator):
 
         """
         self._assert_not_created()
-        # TODO: Add exceptions if file can not be parsed
-        if is_text_file(recording_filename):
+
+        unformatted_variable_name = 'neuron{0}.spikes'
+        if neuron_group_name:
+            unformatted_variable_name = neuron_group_name + '.' + unformatted_variable_name
+
+        if is_text_file(recording_filename):  # text format from FileSpikeMonitor
             with open(recording_filename, 'r') as r:
                 file_content = r.read()
-                r.close()
+            lines = file_content.splitlines()
 
-                lines = file_content.splitlines()
-                # Extract indices and spike time_points in a similar manner to brian.load_aer() below
-                indices = np.empty(len(lines), dtype='int')
-                times = np.empty(len(lines))
-                for i, line in enumerate(lines):
-                    colon = line.find(',')
-                    indices[i] = int(line[:colon])
-                    times[i] = float(line[colon+2:])
-        else:  # binary format
+            for i, line in enumerate(lines):
+                colon = line.find(',')
+                index = int(line[:colon])
+                time = float(line[colon+2:])
+                self.add_values(unformatted_variable_name.format(index), time, 'ms', MetaType.EVENT)
+        else:  # binary format from AERSpikeMonitor
             try:
                 import brian
             except ImportError:
                 raise _brian_not_installed_error
+
             try:
                 indices, times = brian.load_aer(recording_filename)
             except Exception:
                 raise ValueError("Could not parse AER file: " + recording_filename)
+            if len(indices) == 0 or len(times) == 0:
+                raise ValueError("Could not parse file or file is empty: " + recording_filename)
 
-        # TODO: Should empty files be neglected or should an error be raised?
-        if len(indices) == 0 or len(times) == 0:
-            raise ValueError("Could not parse file or file is empty: " + recording_filename)
-
-        spikes = {}
-        for index, time in zip(indices, times):
-            str_index = str(index)
-            if not str_index in spikes:
-                spikes[str_index] = []
-            spikes[str_index].append(time)
-
-        for index, spike_list in spikes.items():
-            # TODO: Think about alternative naming for neuron
-            neuron_label = 'neuron' + str(index) + '.spikes'
-            if neuron_group_name:
-                neuron_label = neuron_group_name + '.' + neuron_label
-            self.add_values(neuron_label, spike_list, 'ms', MetaType.EVENT)
+            for index, time in zip(indices, times):
+                self.add_values(unformatted_variable_name.format(index), time, 'ms', MetaType.EVENT)
         return self
 
     def record_brian_model(self, model_filename, temp_filename='temp_model.py', overwrite_temp_file=True, remove_temp_file=True):
