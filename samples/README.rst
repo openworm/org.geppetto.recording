@@ -1,5 +1,5 @@
-Samples
-=======
+Sample Recordings
+=================
 
 This directory contains some sample recordings that show what is possible with org.geppetto.recording.
 
