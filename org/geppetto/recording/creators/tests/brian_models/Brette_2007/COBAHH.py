@@ -60,11 +60,11 @@ alphan = 0.032*(mV**-1)*(15*mV-v+VT)/(exp((15*mV-v+VT)/(5*mV))-1.)/ms : Hz
 betan = .5*exp((10*mV-v+VT)/(40*mV))/ms : Hz
 ''')
 
-P=NeuronGroup(4000,model=eqs,\
+P=NeuronGroup(200,model=eqs,\
               threshold=EmpiricalThreshold(threshold=-20*mV,refractory=3*ms),\
               implicit=True,freeze=True,compile=False)
-Pe=P.subgroup(3200)
-Pi=P.subgroup(800)
+Pe=P.subgroup(160)
+Pi=P.subgroup(40)
 Ce=Connection(Pe,P,'ge')
 Ci=Connection(Pi,P,'gi')
 Ce.connect_random(Pe, P, 0.02,weight=we)
@@ -84,7 +84,7 @@ print "Simulation running..."
 run(1*msecond)
 start_time=time.time()
 
-run(100*msecond)
+run(10*msecond)
 duration=time.time()-start_time
 print "Simulation time:",duration,"seconds"
 print Me.nspikes,"excitatory spikes"
