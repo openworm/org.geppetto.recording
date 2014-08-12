@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # org.geppetto.recording documentation build configuration file, created by
-# sphinx-quickstart on Tue Jul 29 16:00:19 2014.
+# sphinx-quickstart on Mon Aug 11 23:25:01 2014.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -30,7 +30,6 @@ import os
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.viewcode',
     'numpydoc'
 ]
 
@@ -71,7 +70,7 @@ release = '0.0.1'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build']
+exclude_patterns = []
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -262,4 +261,4 @@ texinfo_documents = [
 #texinfo_no_detailmenu = False
 
 # Path to the src files
-sys.path.insert(0, os.path.abspath(".."))
+sys.path.insert(0, os.path.abspath('../..'))

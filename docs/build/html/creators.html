@@ -1,0 +1,485 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Creators &mdash; org.geppetto.recording 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="org.geppetto.recording 0.0.1 documentation" href="index.html" />
+    <link rel="prev" title="Introduction" href="intro.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="intro.html" title="Introduction"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">org.geppetto.recording 0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="creators">
+<h1>Creators<a class="headerlink" href="#creators" title="Permalink to this headline">¶</a></h1>
+<p>You can import these from <tt class="docutils literal"><span class="pre">org.geppetto.recording.creators</span></tt></p>
+<div class="section" id="recordingcreator">
+<h2>RecordingCreator<a class="headerlink" href="#recordingcreator" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="org.geppetto.recording.creators.base.RecordingCreator">
+<em class="property">class </em><tt class="descclassname">org.geppetto.recording.creators.base.</tt><tt class="descname">RecordingCreator</tt><big>(</big><em>filename</em>, <em>simulator='Not specified'</em>, <em>overwrite=False</em><big>)</big><a class="headerlink" href="#org.geppetto.recording.creators.base.RecordingCreator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Basic class to create a recording for Geppetto.</p>
+<p>THIS WILL BE UPDATED SOON...</p>
+<p>There should be one instance of this class per recording created.
+In order to create a recording instantiate this class specifying the filename of the recording you wish to create
+and the simulator used to produce the recording.
+The method add_values allows to add a recording for a given variable by specifying its path.
+It is possible to call add_values multiple times for the same path (values will be appended) or call it once
+specifying a list of values.
+The values provided with the method add_values will be associated with the corresponding time step at the same index
+in the time vector.
+Additionally, global metadata of various types can be added through add_metadata.</p>
+<p>Example:
+time [0.1, 0.2, 0.3, 0.4, 0.5]
+cell</p>
+<blockquote>
+<div>v1 [0.65, 0.66, 0.67, 0.68, 0.69]
+v2 [0.20, 0.20, 0.21, 0.22, 0.23]</div></blockquote>
+<p>0.67 will be the value of cell.v1 at 0.3ms
+0.22 will be the value of cell.v2 at 0.4ms</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>filename</strong> : string</p>
+<blockquote>
+<div><p>The path to the recording file that will be created.</p>
+</div></blockquote>
+<p><strong>simulator</strong> : string, optional</p>
+<blockquote>
+<div><p>The name of the simulator that was used to create the data in this recording.</p>
+</div></blockquote>
+<p><strong>overwrite</strong> : boolean, optional</p>
+<blockquote class="last">
+<div><p>Set to True to overwrite an existing file.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">c</span> <span class="o">=</span> <span class="n">RecordingCreator</span><span class="p">(</span><span class="s">&#39;file.h5&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">add_values</span><span class="p">(</span><span class="s">&#39;cell.voltage&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mf">60.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">59.9</span><span class="p">,</span> <span class="o">-</span><span class="mf">59.8</span><span class="p">],</span> <span class="s">&#39;mV&#39;</span><span class="p">,</span> <span class="n">MetaType</span><span class="o">.</span><span class="n">STATE_VARIABLE</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">add_values</span><span class="p">(</span><span class="s">&#39;cell.voltage&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">59.7</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">set_time_step</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="s">&#39;ms&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">add_metadata</span><span class="p">(</span><span class="s">&#39;version&#39;</span><span class="p">,</span> <span class="s">&#39;1&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+</pre></div>
+</div>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="org.geppetto.recording.creators.base.RecordingCreator.add_metadata">
+<tt class="descname">add_metadata</tt><big>(</big><em>name</em>, <em>value</em><big>)</big><a class="headerlink" href="#org.geppetto.recording.creators.base.RecordingCreator.add_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add global metadata to the recording.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>name</strong> : string</p>
+<blockquote>
+<div><p>The name of the metadata field.</p>
+</div></blockquote>
+<p><strong>value</strong> : anything</p>
+<blockquote>
+<div><p>The value of the metadata field.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">RecordingCreator</p>
+<blockquote class="last">
+<div><p>The creator itself, to allow chained method calls.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="org.geppetto.recording.creators.base.RecordingCreator.add_time_points">
+<tt class="descname">add_time_points</tt><big>(</big><em>time_points</em>, <em>unit=None</em><big>)</big><a class="headerlink" href="#org.geppetto.recording.creators.base.RecordingCreator.add_time_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add one or multiple time points for all state variables in the recording.</p>
+<p>If other time points were added previously, the new ones will be appended.
+Call only one of set_time_step and add_time_points.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>time_points</strong> : number of any iterable of numbers</p>
+<blockquote>
+<div><p>One or multiple time points to add. Will be appended to existing time points.</p>
+</div></blockquote>
+<p><strong>unit</strong> : string, optional</p>
+<blockquote>
+<div><p>The unit of the values in <cite>time_points</cite>. Leave <cite>None</cite> to use the value from a previous definition of time points.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">RecordingCreator</p>
+<blockquote class="last">
+<div><p>The creator itself, to allow chained method calls.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="org.geppetto.recording.creators.base.RecordingCreator.add_values">
+<tt class="descname">add_values</tt><big>(</big><em>name</em>, <em>values</em>, <em>unit=None</em>, <em>meta_type=None</em>, <em>is_single_value=False</em><big>)</big><a class="headerlink" href="#org.geppetto.recording.creators.base.RecordingCreator.add_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add one or multiple values of a variable to the recording.</p>
+<p>If the variable was never defined before, it will be created. Otherwise, the values will be appended.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>name</strong> : string</p>
+<blockquote>
+<div><p>The name of the variable.
+A dot separated name creates a hierarchy in the file (for example <cite>poolroom.table.ball.x</cite>).</p>
+</div></blockquote>
+<p><strong>values</strong> : number or any iterable of numbers</p>
+<blockquote>
+<div><p>One or multiple values of the variable. Will be appended to existing values.
+If <cite>meta_type</cite> is STATE_VARIABLE and <cite>values</cite> is iterable, its elements will be stored for successive time points.</p>
+</div></blockquote>
+<p><strong>unit</strong> : string, optional</p>
+<blockquote>
+<div><p>The unit of the variable. Leave <cite>None</cite> to use the value from a previous definition of this variable.</p>
+</div></blockquote>
+<p><strong>meta_type</strong> : {MetaType.STATE_VARIABLE, MetaType.PARAMETER, MetaType.PROPERTY, MetaType.EVENT}, optional</p>
+<blockquote>
+<div><p>The type of the variable. Leave <cite>None</cite> to use the value from a previous definition of this variable.</p>
+</div></blockquote>
+<p><strong>is_single_value</strong> : boolean, optional</p>
+<blockquote>
+<div><p>If set to True, <cite>values</cite> will be stored as a single value for a single time point even if it is iterable.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">RecordingCreator</p>
+<blockquote class="last">
+<div><p>The creator itself, to allow chained method calls.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="org.geppetto.recording.creators.base.RecordingCreator.create">
+<tt class="descname">create</tt><big>(</big><em>verbose=False</em><big>)</big><a class="headerlink" href="#org.geppetto.recording.creators.base.RecordingCreator.create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the recording file and write all added data to it.</p>
+<p>This has to be the last call to the <cite>RecordingCreator</cite> instance. Any further method calls will raise errors.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>verbose</strong> : boolean, optional</p>
+<blockquote class="last">
+<div><p>If set to True, will print additional information.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="org.geppetto.recording.creators.base.RecordingCreator.set_time_step">
+<tt class="descname">set_time_step</tt><big>(</big><em>time_step</em>, <em>unit</em><big>)</big><a class="headerlink" href="#org.geppetto.recording.creators.base.RecordingCreator.set_time_step" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set a fixed time step for all state variables in the recording.</p>
+<p>Call only one of set_time_step and add_time_points.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>time_step</strong> : number</p>
+<blockquote>
+<div><p>The (fixed) duration between successive time points.</p>
+</div></blockquote>
+<p><strong>unit</strong> : string</p>
+<blockquote>
+<div><p>The unit of <cite>time_step</cite>.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">RecordingCreator</p>
+<blockquote class="last">
+<div><p>The creator itself, to allow chained method calls.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="neuronrecordingcreator">
+<h2>NeuronRecordingCreator<a class="headerlink" href="#neuronrecordingcreator" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="org.geppetto.recording.creators.neuron.NeuronRecordingCreator">
+<em class="property">class </em><tt class="descclassname">org.geppetto.recording.creators.neuron.</tt><tt class="descname">NeuronRecordingCreator</tt><big>(</big><em>filename</em><big>)</big><a class="headerlink" href="#org.geppetto.recording.creators.neuron.NeuronRecordingCreator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#org.geppetto.recording.creators.base.RecordingCreator" title="org.geppetto.recording.creators.base.RecordingCreator"><tt class="xref py py-class docutils literal"><span class="pre">org.geppetto.recording.creators.base.RecordingCreator</span></tt></a></p>
+<p>A RecordingCreator which interfaces to the NEURON simulator (www.neuron.yale.edu).</p>
+<p>More info to come...</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>filename</strong> : string</p>
+<blockquote class="last">
+<div><p>The path to the recording file that will be created.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="org.geppetto.recording.creators.neuron.NeuronRecordingCreator.add_neuron_recording">
+<tt class="descname">add_neuron_recording</tt><big>(</big><em>recording_file</em>, <em>variable_labels=None</em>, <em>variable_labels_prefix=''</em>, <em>variable_units=None</em>, <em>time_column=None</em><big>)</big><a class="headerlink" href="#org.geppetto.recording.creators.neuron.NeuronRecordingCreator.add_neuron_recording" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a recording file from the NEURON simulator and add its contents to the current recording.</p>
+<p>More info to come...</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>recording_file</strong> : string</p>
+<blockquote>
+<div><p>Path to the file that should be added</p>
+</div></blockquote>
+<p><strong>variable_labels</strong> : string or iterable of strings</p>
+<blockquote>
+<div><p>The label(s) of the variable(s) in the recording. If None or empty, the labels are searched within the recording. The number of labels has to match the number of data columns in the recording.</p>
+</div></blockquote>
+<p><strong>variable_labels_prefix</strong> : string</p>
+<blockquote>
+<div><p>A string to prepend to all variable labels. For example, <cite>neuron0.</cite> makes the variable <cite>v</cite> to <cite>neuron0.v</cite>.</p>
+</div></blockquote>
+<p><strong>variable_units</strong> : string or iterable of strings</p>
+<blockquote>
+<div><p>The unit(s) of the variable(s) in the recording. If None or empty, <cite>unknown_unit</cite> is used. The number of units has to match the number of data columns in the recording.</p>
+</div></blockquote>
+<p><strong>time_column</strong> : int</p>
+<blockquote class="last">
+<div><p>The index of the data column in the recording that contains the time. If None, the time column is searched within the recording.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="org.geppetto.recording.creators.neuron.NeuronRecordingCreator.record_neuron_model">
+<tt class="descname">record_neuron_model</tt><big>(</big><em>model_file</em>, <em>tstop=None</em>, <em>dt=None</em><big>)</big><a class="headerlink" href="#org.geppetto.recording.creators.neuron.NeuronRecordingCreator.record_neuron_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulate a NEURON model, record some variables and add their values to the recording.</p>
+<p>More info to come...</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>model_file</strong> : string</p>
+<blockquote>
+<div><p>The path to the Hoc file for the NEURON simulation.</p>
+</div></blockquote>
+<p><strong>tstop</strong> : number</p>
+<blockquote>
+<div><p>The time to run the simulation for.</p>
+</div></blockquote>
+<p><strong>dt</strong> : number</p>
+<blockquote class="last">
+<div><p>The time step to use for the simulation run.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="brianrecordingcreator">
+<h2>BrianRecordingCreator<a class="headerlink" href="#brianrecordingcreator" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="org.geppetto.recording.creators.brian.BrianRecordingCreator">
+<em class="property">class </em><tt class="descclassname">org.geppetto.recording.creators.brian.</tt><tt class="descname">BrianRecordingCreator</tt><big>(</big><em>filename</em><big>)</big><a class="headerlink" href="#org.geppetto.recording.creators.brian.BrianRecordingCreator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#org.geppetto.recording.creators.base.RecordingCreator" title="org.geppetto.recording.creators.base.RecordingCreator"><tt class="xref py py-class docutils literal"><span class="pre">org.geppetto.recording.creators.base.RecordingCreator</span></tt></a></p>
+<p>A RecordingCreator which interfaces to the Brian spiking neural network simulator (www.briansimulator.org).</p>
+<p>More info to come...</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>filename</strong> : string</p>
+<blockquote class="last">
+<div><p>The path to the recording file that will be created.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="org.geppetto.recording.creators.brian.BrianRecordingCreator.add_brian_recording">
+<tt class="descname">add_brian_recording</tt><big>(</big><em>recording_filename</em>, <em>neuron_group_name=None</em><big>)</big><a class="headerlink" href="#org.geppetto.recording.creators.brian.BrianRecordingCreator.add_brian_recording" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a recording file from the Brian simulator and add its contents to the current recording.</p>
+<p>Recording files from Brian contain the spike times for all neurons in one NeuronGroup.
+They can be created using Brian&#8217;s FileSpikeMonitor (text format) or AERSpikeMonitor (binary format).
+If <cite>neuron_group_name</cite> is supplied, the spike times will be stored as neuron_group_name.neuron123.spikes,
+otherwise simply as neuron123.spikes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>recording_filename</strong> : string</p>
+<blockquote>
+<div><p>Path to the file that holds the Brian recording.</p>
+</div></blockquote>
+<p><strong>neuron_group_name</strong> : string</p>
+<blockquote class="last">
+<div><p>Name of the NeuronGroup this recording belongs to. If supplied, the spike times will be stored under
+neuron_group_name.neuron123.spikes.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="org.geppetto.recording.creators.brian.BrianRecordingCreator.record_brian_model">
+<tt class="descname">record_brian_model</tt><big>(</big><em>model_filename</em>, <em>temp_filename='temp_model.py'</em>, <em>overwrite_temp_file=True</em>, <em>remove_temp_file=True</em><big>)</big><a class="headerlink" href="#org.geppetto.recording.creators.brian.BrianRecordingCreator.record_brian_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulate a Brian model, record all variables and add their values to the recording.</p>
+<p>More info to come...</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>model_filename</strong> : string</p>
+<blockquote>
+<div><p>The path to the Python file for the Brian simulation.</p>
+</div></blockquote>
+<p><strong>temp_filename</strong> : string, optional</p>
+<blockquote>
+<div><p>The path to the temporary file where the modified model information will be written.</p>
+</div></blockquote>
+<p><strong>overwrite_temp_file</strong> : boolean, optional</p>
+<blockquote>
+<div><p>If True, overwrite a previous version of the temporary file (default).</p>
+</div></blockquote>
+<p><strong>remove_temp_file</strong> : boolean, optional</p>
+<blockquote class="last">
+<div><p>If True, remove the temporary file after the simulation was run (default).</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Creators</a><ul>
+<li><a class="reference internal" href="#recordingcreator">RecordingCreator</a></li>
+<li><a class="reference internal" href="#neuronrecordingcreator">NeuronRecordingCreator</a></li>
+<li><a class="reference internal" href="#brianrecordingcreator">BrianRecordingCreator</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="intro.html"
+                        title="previous chapter">Introduction</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/creators.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="intro.html" title="Introduction"
+             >previous</a> |</li>
+        <li><a href="index.html">org.geppetto.recording 0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Johannes Rieke, Matteo Cantarelli.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

@@ -10,30 +10,42 @@ _brian_not_installed_error = ImportError("You have to install the brian package 
 
 class BrianRecordingCreator(RecordingCreator):
     """
-    Work in progress...
+    A RecordingCreator which interfaces to the Brian spiking neural network simulator (www.briansimulator.org).
+
+    More info to come...
+
+    Parameters
+    ----------
+    filename : string
+        The path to the recording file that will be created.
+
     """
 
     def __init__(self, filename):
         RecordingCreator.__init__(self, filename, 'Brian')
 
-    def add_brian_recording(self, recording_file, neuron_group_label=None):
-        # TODO: Use variable_labels_prefix instead of neuron_group_label?
-        """
-        Read a file that contains a recording from the brian simulator and add its contents to the current recording.
-        The file can be created using brian's FileSpikeMonitor or AERSpikeMonitor.
+    def add_brian_recording(self, recording_filename, neuron_group_name=None):
+        # TODO: Use variable_labels_prefix instead of neuron_group_name?
+        """Read a recording file from the Brian simulator and add its contents to the current recording.
+
+        Recording files from Brian contain the spike times for all neurons in one NeuronGroup.
+        They can be created using Brian's FileSpikeMonitor (text format) or AERSpikeMonitor (binary format).
+        If `neuron_group_name` is supplied, the spike times will be stored as neuron_group_name.neuron123.spikes,
+        otherwise simply as neuron123.spikes.
 
         Parameters
         ----------
-        recording_file : string
-            Path to the file that should be added
-        neuron_group_label : string
-            Label for the neuron group of these values. If supplied, the values will be stored as `neuron_group_label.neuron123.spikes`, otherwise as `neuron123.spikes`, for example.
+        recording_filename : string
+            Path to the file that holds the Brian recording.
+        neuron_group_name : string
+            Name of the NeuronGroup this recording belongs to. If supplied, the spike times will be stored under
+            neuron_group_name.neuron123.spikes.
+
         """
         self._assert_not_created()
-
         # TODO: Add exceptions if file can not be parsed
-        if is_text_file(recording_file):
-            with open(recording_file, 'r') as r:
+        if is_text_file(recording_filename):
+            with open(recording_filename, 'r') as r:
                 file_content = r.read()
                 r.close()
 
@@ -51,13 +63,13 @@ class BrianRecordingCreator(RecordingCreator):
             except ImportError:
                 raise _brian_not_installed_error
             try:
-                indices, times = brian.load_aer(recording_file)
+                indices, times = brian.load_aer(recording_filename)
             except Exception:
-                raise ValueError("Could not parse AER file: " + recording_file)
+                raise ValueError("Could not parse AER file: " + recording_filename)
 
         # TODO: Should empty files be neglected or should an error be raised?
         if len(indices) == 0 or len(times) == 0:
-            raise ValueError("Could not parse file or file is empty: " + recording_file)
+            raise ValueError("Could not parse file or file is empty: " + recording_filename)
 
         spikes = {}
         for index, time in zip(indices, times):
@@ -69,12 +81,28 @@ class BrianRecordingCreator(RecordingCreator):
         for index, spike_list in spikes.items():
             # TODO: Think about alternative naming for neuron
             neuron_label = 'neuron' + str(index) + '.spikes'
-            if neuron_group_label:
-                neuron_label = neuron_group_label + '.' + neuron_label
+            if neuron_group_name:
+                neuron_label = neuron_group_name + '.' + neuron_label
             self.add_values(neuron_label, spike_list, 'ms', MetaType.EVENT)
         return self
 
-    def record_brian_model(self, model_file, temp_file='temp_model.py', overwrite_temp_file=True, remove_temp_file=True):
+    def record_brian_model(self, model_filename, temp_filename='temp_model.py', overwrite_temp_file=True, remove_temp_file=True):
+        """Simulate a Brian model, record all variables and add their values to the recording.
+
+        More info to come...
+
+        Parameters
+        ----------
+        model_filename : string
+            The path to the Python file for the Brian simulation.
+        temp_filename : string, optional
+            The path to the temporary file where the modified model information will be written.
+        overwrite_temp_file : boolean, optional
+            If True, overwrite a previous version of the temporary file (default).
+        remove_temp_file : boolean, optional
+            If True, remove the temporary file after the simulation was run (default).
+
+        """
         self._assert_not_created()
         # TODO: Include runtime and timestep to run the model from outside.
 
@@ -135,14 +163,14 @@ def add_monitors_to_all_networks(variables_dict):
 
         # TODO: Find out subgroups and store their neurons under different labels
 
-        if os.path.exists(temp_file) and not overwrite_temp_file:
+        if os.path.exists(temp_filename) and not overwrite_temp_file:
             raise IOError("Temporary file already _variable_exists, set the overwrite flag to proceed")
 
         # Create a temporary file that contains the model and some additions to set up the monitors for recording.
-        with open(temp_file, 'w') as temp:
-            temp.write(text_to_prepend)
-            with open(model_file, 'r') as model:
-                for line in model:
+        with open(temp_filename, 'w') as temp_file:
+            temp_file.write(text_to_prepend)
+            with open(model_filename, 'r') as model_file:
+                for line in model_file:
                     # TODO: Maybe omit lines with # or ''' or """ before run or where run is in a string (although it doesn't do any harm functionally)
                     if 'run' in line:
                         stripped_line = line
@@ -152,24 +180,24 @@ def add_monitors_to_all_networks(variables_dict):
                             stripped_line = stripped_line[1:]
 
                         if stripped_line.startswith('run'):  # simple run()
-                            temp.write(indentation + "default_magic_network = MagicNetwork(verbose=False, level=2)\n")
-                            temp.write(indentation + "add_monitors_to_all_networks(locals())\n")
-                            temp.write(indentation + "default_magic_network." + stripped_line)
+                            temp_file.write(indentation + "default_magic_network = MagicNetwork(verbose=False, level=2)\n")
+                            temp_file.write(indentation + "add_monitors_to_all_networks(locals())\n")
+                            temp_file.write(indentation + "default_magic_network." + stripped_line)
                         else:  # may be Network.run()
-                            temp.write(indentation + "add_monitors_to_all_networks(locals())\n")
-                            temp.write(line)
+                            temp_file.write(indentation + "add_monitors_to_all_networks(locals())\n")
+                            temp_file.write(line)
                     else:
-                        temp.write(line)
+                        temp_file.write(line)
 
         # Execute the temporary file and retrieve the dictionaries that store the neuron groups and monitors.
         vars = {}
-        execfile(temp_file, vars)
+        execfile(temp_filename, vars)
         monitored_groups = vars['monitored_groups']
         spike_monitors = vars['spike_monitors']
         multi_state_monitors = vars['multi_state_monitors']
 
         if remove_temp_file:
-            os.remove(temp_file)
+            os.remove(temp_filename)
 
         # print 'Found {0} neuron group(s) in total'.format(len(monitored_groups))
         # for name_neuron_group, group in monitored_groups.items():

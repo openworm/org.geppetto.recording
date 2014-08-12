@@ -37,23 +37,19 @@ def make_iterable(object):
 
 class RecordingCreator:
     """
-    THIS IS OUTDATED!
+    Basic class to create a recording for Geppetto.
 
-    This class allows to create a recording for Geppetto.
+    THIS WILL BE UPDATED SOON...
 
     There should be one instance of this class per recording created.
     In order to create a recording instantiate this class specifying the filename of the recording you wish to create
-     and the simulator used to produce the recording.
+    and the simulator used to produce the recording.
     The method add_values allows to add a recording for a given variable by specifying its path.
     It is possible to call add_values multiple times for the same path (values will be appended) or call it once
-     specifying a list of values.
-    Once all the values have been appended call either add_fixed_time_step_vector or  add_variable_time_step_vector
-     to generate a vector with values for time.
+    specifying a list of values.
     The values provided with the method add_values will be associated with the corresponding time step at the same index
-     in the time vector.
+    in the time vector.
     Additionally, global metadata of various types can be added through add_metadata.
-    Once all the values have been added and the time vector generated it is possible to create the recording
-     by calling create().
 
     Example:
     time [0.1, 0.2, 0.3, 0.4, 0.5]
@@ -62,7 +58,27 @@ class RecordingCreator:
         v2 [0.20, 0.20, 0.21, 0.22, 0.23]
     0.67 will be the value of cell.v1 at 0.3ms
     0.22 will be the value of cell.v2 at 0.4ms
+
+    Parameters
+    ----------
+    filename : string
+        The path to the recording file that will be created.
+    simulator : string, optional
+        The name of the simulator that was used to create the data in this recording.
+    overwrite : boolean, optional
+        Set to True to overwrite an existing file.
+
+    Examples
+    --------
+    >>> c = RecordingCreator('file.h5')
+    >>> c.add_values('cell.voltage', [-60.0, -59.9, -59.8], 'mV', MetaType.STATE_VARIABLE)
+    >>> c.add_values('cell.voltage', -59.7)
+    >>> c.set_time_step(0.1, 'ms')
+    >>> c.add_metadata('version', '1')
+    >>> c.create()
+
     """
+
     def __init__(self, filename, simulator='Not specified', overwrite=False):
         # TODO: Add support for file to be reopened
         if os.path.isfile(filename) and not overwrite:
@@ -73,7 +89,6 @@ class RecordingCreator:
         self.filename = filename
         self.values = {}
         self.units = {}
-        self.data_types = {}
         self.meta_types = {}
         self.time_points = None
         self.time_step = None
@@ -81,6 +96,20 @@ class RecordingCreator:
         self.simulator = simulator
         self.metadata = {}
         self.created = False
+
+    def __repr__(self):
+        r = 'Recording creator for ' + self.filename + ' (simulator: ' + self.simulator + ', variables: ' + str(len(self.values))
+        if self.time_points is not None:
+            r += ', time points:' + str(len(self.time_points))
+        elif self.time_step is not None:
+            r += ', fixed time step'
+        else:
+            r += ', no time'
+        r += ', metadata: ' + str(len(self.metadata)) + ')'
+        return r
+
+    def __nonzero__(self):
+        return not self.created
 
     def _assert_not_created(self):
         """Assert that the create method was not called yet."""
@@ -99,8 +128,7 @@ class RecordingCreator:
         return 1
 
     def add_values(self, name, values, unit=None, meta_type=None, is_single_value=False):
-        """
-        Add one or multiple values of a variable to the recording.
+        """Add one or multiple values of a variable to the recording.
 
         If the variable was never defined before, it will be created. Otherwise, the values will be appended.
 
@@ -114,7 +142,7 @@ class RecordingCreator:
             If `meta_type` is STATE_VARIABLE and `values` is iterable, its elements will be stored for successive time points.
         unit : string, optional
             The unit of the variable. Leave `None` to use the value from a previous definition of this variable.
-        meta_type : {MetaType.STATE_VARIABLE, MetaType.PARAMETER, MetaType.PROPERTY, MetaType.Event}, optional
+        meta_type : {MetaType.STATE_VARIABLE, MetaType.PARAMETER, MetaType.PROPERTY, MetaType.EVENT}, optional
             The type of the variable. Leave `None` to use the value from a previous definition of this variable.
         is_single_value : boolean, optional
             If set to True, `values` will be stored as a single value for a single time point even if it is iterable.
@@ -123,6 +151,7 @@ class RecordingCreator:
         -------
         RecordingCreator
             The creator itself, to allow chained method calls.
+
         """
         self._assert_not_created()
         if not name:
@@ -151,8 +180,7 @@ class RecordingCreator:
         return self
 
     def add_metadata(self, name, value):
-        """
-        Add global metadata to the recording.
+        """Add global metadata to the recording.
 
         Parameters
         ----------
@@ -165,6 +193,7 @@ class RecordingCreator:
         -------
         RecordingCreator
             The creator itself, to allow chained method calls.
+
         """
         self._assert_not_created()
         if not name:
@@ -176,8 +205,7 @@ class RecordingCreator:
         return self
 
     def set_time_step(self, time_step, unit):
-        """
-        Set a fixed time step for all state variables in the recording.
+        """Set a fixed time step for all state variables in the recording.
 
         Call only one of set_time_step and add_time_points.
 
@@ -192,6 +220,7 @@ class RecordingCreator:
         -------
         RecordingCreator
             The creator itself, to allow chained method calls.
+
         """
         self._assert_not_created()
         if hasattr(time_step, '__iter__'):
@@ -205,8 +234,7 @@ class RecordingCreator:
         return self
 
     def add_time_points(self, time_points, unit=None):
-        """
-        Add one or multiple time points for all state variables in the recording.
+        """Add one or multiple time points for all state variables in the recording.
 
         If other time points were added previously, the new ones will be appended.
         Call only one of set_time_step and add_time_points.
@@ -222,6 +250,7 @@ class RecordingCreator:
         -------
         RecordingCreator
             The creator itself, to allow chained method calls.
+
         """
         self._assert_not_created()
         if self.time_step is not None:
@@ -253,25 +282,24 @@ class RecordingCreator:
     #     return self
 
     def create(self, verbose=False):
-        """
-        Create the recording file and write all added data to it.
+        """Create the recording file and write all added data to it.
 
-        After calling this method, the `RecordingCreator` is useless. Any further method calls will raise errors.
+        This has to be the last call to the `RecordingCreator` instance. Any further method calls will raise errors.
 
         Parameters
         ----------
         verbose : boolean, optional
             If set to True, will print additional information.
+
         """
         self._assert_not_created()
-        f = h5py.File(self.filename, 'w')  # overwrite a previous file
-        if verbose:
-            print 'Writing file...'
-            start_time = time.time()
-        self._process_added_data(f)
-        if verbose:
-            print 'Time to write file:', time.time() - start_time
-        f.close()
+        with h5py.File(self.filename, 'w') as f:  # overwrite a previous file
+            if verbose:
+                print 'Writing file...'
+                start_time = time.time()
+            self._process_added_data(f)
+            if verbose:
+                print 'Time to write file:', time.time() - start_time
         self.created = True
 
     def _process_added_data(self, f):

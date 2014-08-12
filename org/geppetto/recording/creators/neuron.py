@@ -35,7 +35,15 @@ def split_by_separators(s, separators=(' ', ',', ';', '\t')):
 
 class NeuronRecordingCreator(RecordingCreator):
     """
-    Work in progress...
+    A RecordingCreator which interfaces to the NEURON simulator (www.neuron.yale.edu).
+
+    More info to come...
+
+    Parameters
+    ----------
+    filename : string
+        The path to the recording file that will be created.
+
     """
 
     def __init__(self, filename):
@@ -57,9 +65,9 @@ class NeuronRecordingCreator(RecordingCreator):
         return s
 
     def add_neuron_recording(self, recording_file, variable_labels=None, variable_labels_prefix='', variable_units=None, time_column=None):
-        """
-        Read a file that contains a recording from the NEURON simulator and add its contents to the current recording.
-        The file can be created using NEURON's Graph and Vector GUI.
+        """Read a recording file from the NEURON simulator and add its contents to the current recording.
+
+        More info to come...
 
         Parameters
         ----------
@@ -73,6 +81,7 @@ class NeuronRecordingCreator(RecordingCreator):
             The unit(s) of the variable(s) in the recording. If None or empty, `unknown_unit` is used. The number of units has to match the number of data columns in the recording.
         time_column : int
             The index of the data column in the recording that contains the time. If None, the time column is searched within the recording.
+
         """
         self._assert_not_created()
 
@@ -274,6 +283,20 @@ class NeuronRecordingCreator(RecordingCreator):
         return self
 
     def record_neuron_model(self, model_file, tstop=None, dt=None):
+        """Simulate a NEURON model, record some variables and add their values to the recording.
+
+        More info to come...
+
+        Parameters
+        ----------
+        model_file : string
+            The path to the Hoc file for the NEURON simulation.
+        tstop : number
+            The time to run the simulation for.
+        dt : number
+            The time step to use for the simulation run.
+
+        """
         self._assert_not_created()
         try:
             import neuron
