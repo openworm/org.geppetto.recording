@@ -14,12 +14,14 @@ You need Python 2.7 to run the script. Furthermore, you have to have NEURON and/
 configured to work with your Python version (so, ``import neuron`` and ``import brian`` on the Python console should give
 no errors).
 
-If .py files are associated with the Python interpreter, you can run the script from the command line with::
+If *.py* files are associated with the Python interpreter, you can simply run the script from the command line with::
 
 record -neuron modelfile.hoc [recordingfile.h5]
-    Execute a NEURON model (only hoc at the moment and not quite finished!) and store the simulation data to a Geppetto recording.
+    Execute a NEURON model (experimental, only hoc!) and store the simulation data in a Geppetto recording.
+
 record -brian modelfile.py [recordingfile.h5]
-    Execute a Brian model and store the simulation data to a Geppetto recording.
+    Execute a Brian model and store the simulation data in a Geppetto recording.
+
 record help
     Show this help message.
 
