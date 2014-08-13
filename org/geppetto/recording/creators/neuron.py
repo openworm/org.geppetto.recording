@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import os
 import numpy as np
 from org.geppetto.recording.creators.base import RecordingCreator, MetaType, is_text_file, make_iterable
 
@@ -282,6 +283,45 @@ class NeuronRecordingCreator(RecordingCreator):
                 raise ValueError("Binary file is empty or could not be parsed: " + recording_file)
         return self
 
+
+    def record_neuron_hoc_model(self, model_filename, temp_filename='temp_model.hoc', overwrite_temp_file=True, remove_temp_file=True):
+        self._assert_not_created()
+
+        # TODO: Do this in common method: Parse hoc or py model depending on `file_extension`
+        try:
+            file_extension = model_filename[model_filename.rindex('.')+1:]
+            if file_extension == 'hoc':
+                pass
+            elif file_extension == 'py':
+                pass
+            else:
+                pass
+        except ValueError:
+            pass
+
+        try:
+            import neuron
+            from neuron import h
+        except ImportError:
+            raise _neuron_not_installed_error
+
+        if os.path.exists(temp_filename) and not overwrite_temp_file:
+            raise IOError("Temporary file already _variable_exists, set the overwrite flag to proceed")
+
+        text_to_prepend="""
+proc
+
+"""
+
+
+        # Create a temporary file that contains the model and some additions to set up the monitors for recording.
+        with open(temp_filename, 'w') as temp_file:
+            temp_file.write(text_to_prepend)
+            with open(model_filename, 'r') as model_filename:
+                for line in model_filename:
+                    pass
+
+
     def record_neuron_model(self, model_file, tstop=None, dt=None):
         """Simulate a NEURON model, record some variables and add their values to the recording.
 
@@ -303,6 +343,7 @@ class NeuronRecordingCreator(RecordingCreator):
             from neuron import h
         except ImportError:
             raise _neuron_not_installed_error
+
         # TODO: Currently, model_file must not contain sth like load_file("nrngui.hoc") because this hoc file cannot be found
         h.load_file(model_file.replace('\\', '/'))  # load_file needs slashes, also on Windows
 

@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import numpy as np
 import os
 import time
+import re
 from org.geppetto.recording.creators.base import RecordingCreator, MetaType, is_text_file
 
 
@@ -153,14 +154,18 @@ def add_monitors_to_all_networks(variables_dict):
         # TODO: Find out subgroups and store their neurons under different labels
 
         if os.path.exists(temp_filename) and not overwrite_temp_file:
-            raise IOError("Temporary file already _variable_exists, set the overwrite flag to proceed")
+            raise IOError("Temporary file already exists, set the overwrite flag to proceed")
 
         # Create a temporary file that contains the model and some additions to set up the monitors for recording.
+        # TODO: Maybe try to make this without a temporary file, using exec
         with open(temp_filename, 'w') as temp_file:
             temp_file.write(text_to_prepend)
             with open(model_filename, 'r') as model_file:
                 for line in model_file:
                     # TODO: Maybe omit lines with # or ''' or """ before run or where run is in a string (although it doesn't do any harm functionally)
+                    # TODO: Refactor this
+                    # TODO: What if additional model files are being called?
+                    # TODO: Instead of searching for run commands, use sys.settrace (or sth equivalent) to check at each execution step if the monitors are set up. This could also be done from here, without the need to create a temporary model file.
                     if 'run' in line:
                         stripped_line = line
                         indentation = ''
@@ -168,11 +173,12 @@ def add_monitors_to_all_networks(variables_dict):
                             indentation += stripped_line[:1]
                             stripped_line = stripped_line[1:]
 
-                        if stripped_line.startswith('run'):  # simple run()
+                        # TODO: How to handle multiline commands?
+                        if re.match(r'run[ \t]*\(', stripped_line):  # simple run (line starts with something like 'run (' )
                             temp_file.write(indentation + "default_magic_network = MagicNetwork(verbose=False, level=2)\n")
                             temp_file.write(indentation + "add_monitors_to_all_networks(locals())\n")
                             temp_file.write(indentation + "default_magic_network." + stripped_line)
-                        else:  # may be Network.run()
+                        elif re.search(r'\.[ \t]*run[ \t]*\(', stripped_line):  # maybe Network.run (line starts with something like 'net. run (' )
                             temp_file.write(indentation + "add_monitors_to_all_networks(locals())\n")
                             temp_file.write(line)
                     else:

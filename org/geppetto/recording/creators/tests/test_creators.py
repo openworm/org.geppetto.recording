@@ -121,7 +121,7 @@ class RecordingCreatorTestCase(unittest.TestCase):
     def test_brian_model(self):
         c = BrianRecordingCreator('test_brian_model.h5')
         self.register_test_recording_creator(c)
-        c.record_brian_model(os.path.abspath('brian_models/Brette_2007/COBAHH.py'))
+        c.record_brian_model(os.path.abspath('brian_models/tutorial_model.py'))
         # TODO: make short, deterministic model and run assertEquals
         c.create()
 
