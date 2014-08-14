@@ -70,7 +70,7 @@ class RecordingCreator:
 
     Examples
     --------
-    >>> c = RecordingCreator('file.h5')
+    >>> c = RecordingCreator('recording_file.h5')
     >>> c.add_values('cell.voltage', [-60.0, -59.9, -59.8], 'mV', MetaType.STATE_VARIABLE)
     >>> c.add_values('cell.voltage', -59.7)
     >>> c.set_time_step(0.1, 'ms')

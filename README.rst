@@ -37,11 +37,21 @@ Fire up the command line, navigate into the org.geppetto.recording folder (the o
 
     python setup.py install
 
-Basic Use
----------
-Now, you can import the contents of this repository in Python, for example::
+Usage
+-----
+Detailed instructions on how to create and replay a recording are in the
+`Geppetto documentation <http://docs.geppetto.org/en/latest/recordingandreplaying.html>`_.
 
-    from org.geppetto.recording.creators import RecordingCreator
+If you can't await it, fire up the Python console and type:
+
+>>> from org.geppetto.recording.creators import RecordingCreator, MetaType
+>>> c = RecordingCreator('recording_file.h5')
+>>> c.add_values('cell.voltage', [-60.0, -59.9, -59.8], 'mV', MetaType.STATE_VARIABLE)
+>>> c.set_time_step(0.1, 'ms')
+>>> c.create()
+
+This will create a simple recording named *recording_file.h5* in you current directory.
+You can look at it with `HDFView <http://www.hdfgroup.org/products/java/hdfview/>`_.
 
 Optional: Installing NEURON and Brian
 -------------------------------------
