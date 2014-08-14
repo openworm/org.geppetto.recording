@@ -28,7 +28,7 @@ Requirements
   from `NEURON <http://www.neuron.yale.edu/neuron/>`_ or `Brian <http://briansimulator.org/>`_.
   Note that for NEURON, the standard installer is not enough - you need to be able to run ``import neuron`` or
   ``import brian`` from the Python console.
-  For installation instructions, see `Optional: Installing NEURON and Brian`_.
+  For installation instructions, see the `Appendix: Installing NEURON and Brian`_.
 
 Installation
 ------------
@@ -53,7 +53,7 @@ If you can't await it, fire up the Python console and type:
 This will create a simple recording named *recording_file.h5* in you current directory.
 You can look at it with `HDFView <http://www.hdfgroup.org/products/java/hdfview/>`_.
 
-Optional: Installing NEURON and Brian
+Appendix: Installing NEURON and Brian
 -------------------------------------
 
 **NEURON**
