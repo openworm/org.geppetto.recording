@@ -12,8 +12,8 @@ Requirements
 ------------
 
 - **Python 2.7**: `Download <https://www.python.org/download>`_ and install
-  (Tip: Use the 32bit version, itwill save you a lot of trouble if you want to install NEURON and Brian below).
-  Make sure that the `Python27` and `Python27/Scripts` directories are in your PATH environment variable.
+  (Tip: Use the 32bit version, it will save you a lot of trouble if you want to install NEURON and Brian later).
+  Make sure that the *Python27* and *Python27/Scripts* directories are in your PATH environment variable.
 
 - **Python packages**: These should be loaded automatically if you install org.geppetto.recording.
   If you want to do it manually, the simplest way is to use
@@ -28,12 +28,12 @@ Requirements
   from `NEURON <http://www.neuron.yale.edu/neuron/>`_ or `Brian <http://briansimulator.org/>`_.
   Note that for NEURON, the standard installer is not enough - you need to be able to run ``import neuron`` or
   ``import brian`` from the Python console.
-  See below for installation instructions.
+  For installation instructions, see `Optional: Installing NEURON and Brian`_.
 
 Installation
 ------------
 If you installed all requirements, download or clone the source code from this repository.
-Fire up the command line, navigate into the org.geppetto.recording folder (the one containing this README) and type::
+Fire up the command line, navigate into the org.geppetto.recording folder (the one containing this *README*) and type::
 
     python setup.py install
 
@@ -43,8 +43,10 @@ Now, you can import the contents of this repository in Python, for example::
 
     from org.geppetto.recording.creators import RecordingCreator
 
-Optional: Installing NEURON
----------------------------
+Optional: Installing NEURON and Brian
+-------------------------------------
+
+**NEURON**
 
 Unfortunately, the standard installer for NEURON won't do, you need to be able to run ``import neuron`` from the
 Python console.
@@ -67,8 +69,7 @@ At the very last resort, you can build NEURON from source (on all operating syst
 see the `instructions <http://www.neuron.yale.edu/neuron/download/getstd>`_.
 Keep in mind that this is not the easiest thing to do; if possible, use any of the options above.
 
-Optional: Installing Brian
---------------------------
+**Brian**
 
 If you have `pip`, simply run::
 
