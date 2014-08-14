@@ -3,6 +3,7 @@ import numpy as np
 import os
 import time
 import re
+import runpy
 from org.geppetto.recording.creators.base import RecordingCreator, MetaType, is_text_file
 
 
@@ -19,11 +20,13 @@ class BrianRecordingCreator(RecordingCreator):
     ----------
     filename : string
         The path to the recording file that will be created.
+    overwrite : boolean, optional
+        Set True to overwrite an existing file.
 
     """
 
-    def __init__(self, filename):
-        RecordingCreator.__init__(self, filename, 'Brian')
+    def __init__(self, filename, overwrite=False):
+        RecordingCreator.__init__(self, filename, 'Brian', overwrite)
 
     def add_brian_recording(self, recording_filename, neuron_group_name=None):
         # TODO: Use variable_labels_prefix instead of neuron_group_name?
@@ -67,8 +70,8 @@ class BrianRecordingCreator(RecordingCreator):
 
             try:
                 indices, times = brian.load_aer(recording_filename)
-            except Exception:
-                raise ValueError("Could not parse AER file: " + recording_filename)
+            except Exception as e:
+                raise IOError("Could not parse AER file: " + e.message)
             if len(indices) == 0 or len(times) == 0:
                 raise ValueError("Could not parse file or file is empty: " + recording_filename)
 
@@ -76,7 +79,7 @@ class BrianRecordingCreator(RecordingCreator):
                 self.add_values(unformatted_variable_name.format(index), time, 'ms', MetaType.EVENT)
         return self
 
-    def record_brian_model(self, model_filename, temp_filename='temp_model.py', overwrite_temp_file=True, remove_temp_file=True):
+    def record_brian_model(self, model_filename, temp_filename=None, overwrite_temp_file=True, remove_temp_file=True):
         """Simulate a Brian model, record all variables and add their values to the recording.
 
         More info to come...
@@ -86,7 +89,8 @@ class BrianRecordingCreator(RecordingCreator):
         model_filename : string
             The path to the Python file for the Brian simulation.
         temp_filename : string, optional
-            The path to the temporary file where the modified model information will be written.
+            The path to the temporary file where the modified model information is written. If None (default), the file
+            will be stored alongside your model file (may be necessary if you access other files from you model).
         overwrite_temp_file : boolean, optional
             If True, overwrite a previous version of the temporary file (default).
         remove_temp_file : boolean, optional
@@ -140,7 +144,7 @@ def add_monitors_to_all_networks(variables_dict):
                     try:
                         group_name = get_variable_name(group, variables_dict)  # TODO: Maybe get outer_locals right here.
                     except IndexError:
-                        group_name = 'UnknownNeuronGroup'  # TODO: format
+                        group_name = 'NeuronGroup' + str(id(group))
                     print '    Group is not monitored yet, its name was found to be:', group_name
                     monitored_groups[group_name] = group
                     spike_monitors[group_name] = SpikeMonitor(group, record=True)
@@ -153,9 +157,11 @@ def add_monitors_to_all_networks(variables_dict):
 
         # TODO: Find out subgroups and store their neurons under different labels
 
+        if temp_filename is None:
+            dirname, filename = os.path.split(os.path.abspath(model_filename))
+            temp_filename = os.path.join(dirname, 'RECORD_' + filename.rsplit('.', 1)[0] + '.py')
         if os.path.exists(temp_filename) and not overwrite_temp_file:
             raise IOError("Temporary file already exists, set the overwrite flag to proceed")
-
         # Create a temporary file that contains the model and some additions to set up the monitors for recording.
         # TODO: Maybe try to make this without a temporary file, using exec
         with open(temp_filename, 'w') as temp_file:
@@ -185,14 +191,18 @@ def add_monitors_to_all_networks(variables_dict):
                         temp_file.write(line)
 
         # Execute the temporary file and retrieve the dictionaries that store the neuron groups and monitors.
-        vars = {}
-        execfile(temp_filename, vars)
+        #vars = {'__name__': '__main__', '__file__': os.path.abspath(temp_filename)}
+        #execfile(temp_filename, vars)
+        vars = runpy.run_path(os.path.abspath(temp_filename), run_name='__main__')
         monitored_groups = vars['monitored_groups']
         spike_monitors = vars['spike_monitors']
         multi_state_monitors = vars['multi_state_monitors']
 
         if remove_temp_file:
-            os.remove(temp_filename)
+            try:
+                os.remove(temp_filename)
+            except:
+                print 'Could not remove temporary file:', os.path.abspath(temp_filename)
 
         # print 'Found {0} neuron group(s) in total'.format(len(monitored_groups))
         # for name_neuron_group, group in monitored_groups.items():
@@ -200,23 +210,39 @@ def add_monitors_to_all_networks(variables_dict):
 
         start_time = time.time()
         print 'Populating file...'
-        for name_neuron_group, spike_monitor in spike_monitors.iteritems():
+        for neuron_group_name, spike_monitor in spike_monitors.iteritems():
+            print 'Adding spikes for neuron group', neuron_group_name
+            unformatted_name = neuron_group_name + '.Neuron{0}.spikes'
             for neuron_index, spike_times in spike_monitor.spiketimes.iteritems():
-                self.add_values(name_neuron_group + '.neuron' + str(neuron_index) + '.spikes', spike_times, 'ms', MetaType.EVENT)
+                self.add_values(unformatted_name.format(neuron_index), spike_times, 'ms', MetaType.EVENT)
 
-        for name_neuron_group, multi_state_monitor in multi_state_monitors.iteritems():
-            if self.time_points is None:
-                self.add_time_points(multi_state_monitor.times / brian.ms, 'ms')
-            elif any(self.time_points != state_monitor.times):
-                raise ValueError("Your model contains multiple time vectors, this is not supported yet by the Geppetto recording format.")
+        times = None
+        for neuron_group_name, multi_state_monitor in multi_state_monitors.iteritems():
+            print 'Processing neuron group', neuron_group_name
+            print '\tGetting time points'
+            try:
+                current_times = multi_state_monitor.times / brian.ms
+            except IndexError:
+                print '\tNot successful (this is normal for some groups like SpikeGeneratorGroup)'
+            else:
+                if times is None:
+                    times = current_times
+                elif any(times != current_times):
+                    raise ValueError("Your neuron groups operate with different times (maybe you were adding a group after running?), this is not supported by Geppetto.")
             for variable_name, state_monitor in multi_state_monitor.iteritems():
                 # TODO: Iterating over the state monitor can cause a MemoryError for many steps and 32-bit versions of Python. Iterating over state_monitor._values solves this, but does not give the correct number of values.
                 # TODO: Try to find a workaround for this, or at least except the MemoryError and show a warning to use 64-bit version of Python (and Brian! -> Is this possible?).
+                print '\tAdding variable', variable_name
                 unit = str(state_monitor.unit)[4:]
-                unformatted_name = name_neuron_group + '.neuron{0}.' + variable_name
+                unformatted_name = neuron_group_name + '.neuron{0}.' + variable_name
                 for neuron_index, variable_values in enumerate(state_monitor):
                     self.add_values(unformatted_name.format(neuron_index), variable_values, unit, MetaType.STATE_VARIABLE)
-                print 'Added variable:', variable_name
+
+        if times is not None:
+            self.add_time_points(times, 'ms')
+            print 'Added time points'
+        else:
+            print 'No time points found'
 
         print 'Time to populate file:', time.time() - start_time
         return self

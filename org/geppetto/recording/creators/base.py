@@ -66,7 +66,7 @@ class RecordingCreator:
     simulator : string, optional
         The name of the simulator that was used to create the data in this recording.
     overwrite : boolean, optional
-        Set to True to overwrite an existing file.
+        Set True to overwrite an existing file.
 
     Examples
     --------

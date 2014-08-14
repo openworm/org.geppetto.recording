@@ -44,11 +44,13 @@ class NeuronRecordingCreator(RecordingCreator):
     ----------
     filename : string
         The path to the recording file that will be created.
+    overwrite : boolean, optional
+        Set True to overwrite an existing file.
 
     """
 
-    def __init__(self, filename):
-        RecordingCreator.__init__(self, filename, 'NEURON')
+    def __init__(self, filename, overwrite=False):
+        RecordingCreator.__init__(self, filename, 'NEURON', overwrite)
 
     @staticmethod
     def _replace_location_indices(s):
@@ -280,11 +282,13 @@ class NeuronRecordingCreator(RecordingCreator):
 
                     self.add_values(variable_labels[0], vector.to_python(), variable_units[0], MetaType.STATE_VARIABLE)
             else:
-                raise ValueError("Binary file is empty or could not be parsed: " + recording_file)
+                raise IOError("Binary file could not be parsed (or is empty): " + recording_file)
         return self
 
 
-    def record_neuron_hoc_model(self, model_filename, temp_filename='temp_model.hoc', overwrite_temp_file=True, remove_temp_file=True):
+    def record_neuron_py_model(self, model_filename, temp_filename='temp_model.py', overwrite_temp_file=True, remove_temp_file=True):
+        """In development, do not use"""
+
         self._assert_not_created()
 
         # TODO: Do this in common method: Parse hoc or py model depending on `file_extension`
@@ -309,7 +313,60 @@ class NeuronRecordingCreator(RecordingCreator):
             raise IOError("Temporary file already _variable_exists, set the overwrite flag to proceed")
 
         text_to_prepend="""
-proc
+from neuron import h
+
+time_vector = h.Vector()
+time_vector.record(h._ref_t)
+
+vectors = {}
+constants = {}
+
+def add_missing_vectors():
+    vectors = []
+        labels = []
+
+    for section in h.allsec():
+        constants[section.name() + '.L'] = section.L, 'um', MetaType.PROPERTY)
+        for segment in section:
+            segment_label = section.name() + '.segmentAt' + str(segment.x).replace('.', '_')
+            self.add_values(segment_label + '.diam', segment.diam, 'um', MetaType.PROPERTY)
+            vector_v = h.Vector()
+            vector_v.record(segment._ref_v)
+            vectors.append(vector_v)
+            labels.append(segment_label + '.v')
+            #print 'has public attributes: ', [a for a in dir(segment) if not a[:1] == '_']
+            #print dir(segment.point_processes)
+            #for point_process in segment.point_processes():
+                #print 'found:', point_process
+        print section.name() + ' (' + str(section)
+
+        print '-> set up ' + str(len(vectors)) + ' vectors'
+
+        # access point processes (here: of type IClamp), see http://www.neuron.yale.edu/phpbb/viewtopic.php?f=8&t=186
+        # TODO: How to do this in Python natively?
+        # TODO: How to dereference to section (see URL above)?
+        # TODO: How/where to store this in HDF5?
+        # TODO: Synapses
+        h('objref listIClamps')
+        h('listIClamps = new List("IClamp")')
+
+        # TODO: This terminates Python if there are no iclamps present
+        i_clamps = h.listIClamps
+
+
+        for i, i_clamp in enumerate(i_clamps):
+            label = 'i_clamp_' + str(i)
+            self.add_values(label + '.dur', i_clamp.dur, 'ms', MetaType.PARAMETER)
+            self.add_values(label + '.del', i_clamp.delay, 'ms', MetaType.PARAMETER)
+            self.add_values(label + '.amp', i_clamp.amp, 'mA', MetaType.PARAMETER)
+            vector_i = h.Vector()
+            vector_i.record(i_clamp._ref_i)
+            vectors.append(vector_i)
+            #print i_clamp.Section
+            # TODO: Get i_clamp name
+            labels.append(label + '.i')
+
+        print 'set up iclamps'
 
 """
 

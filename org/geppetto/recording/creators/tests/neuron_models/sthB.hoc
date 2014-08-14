@@ -49,4 +49,12 @@ stimulus.amp = 0.1
 
 tstop = 300
 
+printf("whatev")
+
+//objref p
+//p = new PythonObject()
+//p.a = 0.0
+
+//CVode.extra_scatter_gather(0, p)
+
 //run()
