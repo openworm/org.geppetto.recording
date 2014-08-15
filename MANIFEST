@@ -7,4 +7,4 @@ org\geppetto\recording\creators\__init__.py
 org\geppetto\recording\creators\base.py
 org\geppetto\recording\creators\brian.py
 org\geppetto\recording\creators\neuron.py
-scripts\recording.py
+scripts\record.py

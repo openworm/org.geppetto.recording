@@ -1,4 +1,7 @@
-from distutils.core import setup
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 
 LONG_DESCRIPTION = """Note: This is work in progress, mind your step!
 
@@ -13,8 +16,8 @@ setup(
     name='org.geppetto.recording',
     version='0.0.1',
     packages=['org', 'org.geppetto', 'org.geppetto.recording', 'org.geppetto.recording.creators'],
-    scripts=['scripts/recording.py'],
-    requires=['h5py', 'numpy', 'enum'],
+    scripts=['scripts/record.py'],
+    install_requires=['numpy', 'h5py', 'enum'],
     url='http://github.com/openworm/org.geppetto.recording',
     download_url='http://github.com/openworm/org.geppetto.recording/tarball/0.0.1',
     license='MIT',
