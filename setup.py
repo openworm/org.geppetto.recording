@@ -1,5 +1,9 @@
 from distutils.core import setup
 
+readme = open('README.rst', 'r')
+README_TEXT = readme.read()
+readme.close()
+
 setup(
     name='org.geppetto.recording',
     version='0.0.1',
@@ -12,6 +16,6 @@ setup(
     author='Johannes Rieke, Matteo Cantarelli',
     author_email='matteo@geppetto.org',
     description='Package to create a recording for Geppetto',
-    long_description=open('README.rst').read(),
+    long_description=README_TEXT,
     keywords=['simulation', 'neuroscience', 'recording', 'neuron', 'brian']
 )
