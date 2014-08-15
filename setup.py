@@ -12,5 +12,6 @@ setup(
     author='Johannes Rieke, Matteo Cantarelli',
     author_email='matteo@geppetto.org',
     description='Package to create a recording for Geppetto',
+    long_description=open('README.rst').read(),
     keywords=['simulation', 'neuroscience', 'recording', 'neuron', 'brian']
 )
