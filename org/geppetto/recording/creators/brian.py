@@ -4,6 +4,7 @@ import os
 import time
 import re
 import runpy
+import sys
 from org.geppetto.recording.creators.base import RecordingCreator, MetaType, is_text_file
 
 
@@ -90,7 +91,7 @@ class BrianRecordingCreator(RecordingCreator):
             The path to the Python file for the Brian simulation.
         temp_filename : string, optional
             The path to the temporary file where the modified model information is written. If None (default), the file
-            will be stored alongside your model file (may be necessary if you access other files from you model).
+            will be stored alongside your model file (recommended if your model uses multiple files).
         overwrite_temp_file : boolean, optional
             If True, overwrite a previous version of the temporary file (default).
         remove_temp_file : boolean, optional
@@ -157,14 +158,17 @@ def add_monitors_to_all_networks(variables_dict):
 
         # TODO: Find out subgroups and store their neurons under different labels
 
-        if temp_filename is None:
+        if temp_filename:
+            temp_abspath = os.path.abspath(temp_filename)
+        else:
             dirname, filename = os.path.split(os.path.abspath(model_filename))
-            temp_filename = os.path.join(dirname, 'RECORD_' + filename.rsplit('.', 1)[0] + '.py')
-        if os.path.exists(temp_filename) and not overwrite_temp_file:
+            temp_abspath = os.path.join(dirname, 'RECORD_' + filename.rsplit('.', 1)[0] + '.py')
+
+        if os.path.exists(temp_abspath) and not overwrite_temp_file:
             raise IOError("Temporary file already exists, set the overwrite flag to proceed")
         # Create a temporary file that contains the model and some additions to set up the monitors for recording.
         # TODO: Maybe try to make this without a temporary file, using exec
-        with open(temp_filename, 'w') as temp_file:
+        with open(temp_abspath, 'w') as temp_file:
             temp_file.write(text_to_prepend)
             with open(model_filename, 'r') as model_file:
                 for line in model_file:
@@ -190,19 +194,32 @@ def add_monitors_to_all_networks(variables_dict):
                     else:
                         temp_file.write(line)
 
-        # Execute the temporary file and retrieve the dictionaries that store the neuron groups and monitors.
         #vars = {'__name__': '__main__', '__file__': os.path.abspath(temp_filename)}
         #execfile(temp_filename, vars)
-        vars = runpy.run_path(os.path.abspath(temp_filename), run_name='__main__')
+
+        # Append directory of the model file to system path (enables the model file to import local modules)
+        # and change Python's working directory to this directory (enables the model file to execute local files).
+        model_abspath = os.path.abspath(model_filename)
+        model_dirname = os.path.dirname(model_abspath)
+        sys.path.append(model_dirname)
+        old_cwd = os.getcwd()
+        os.chdir(model_dirname)
+        try:
+            vars = runpy.run_path(os.path.abspath(temp_filename), run_name='__main__', )
+        finally:
+            if remove_temp_file:
+                try:
+                    os.remove(temp_abspath)
+                except:
+                    print 'Could not remove temporary file:', temp_abspath
+
+        # Revert the changes affecting the system path and working directory (see above).
+        os.chdir(old_cwd)
+        sys.path.remove(model_dirname)
+
         monitored_groups = vars['monitored_groups']
         spike_monitors = vars['spike_monitors']
         multi_state_monitors = vars['multi_state_monitors']
-
-        if remove_temp_file:
-            try:
-                os.remove(temp_filename)
-            except:
-                print 'Could not remove temporary file:', os.path.abspath(temp_filename)
 
         # print 'Found {0} neuron group(s) in total'.format(len(monitored_groups))
         # for name_neuron_group, group in monitored_groups.items():
@@ -210,6 +227,8 @@ def add_monitors_to_all_networks(variables_dict):
 
         start_time = time.time()
         print 'Populating file...'
+
+        # TODO: Maybe refactor to one loop.
         for neuron_group_name, spike_monitor in spike_monitors.iteritems():
             print 'Adding spikes for neuron group', neuron_group_name
             unformatted_name = neuron_group_name + '.Neuron{0}.spikes'
@@ -227,14 +246,21 @@ def add_monitors_to_all_networks(variables_dict):
             else:
                 if times is None:
                     times = current_times
-                elif any(times != current_times):
-                    raise ValueError("Your neuron groups operate with different times (maybe you were adding a group after running?), this is not supported by Geppetto.")
+                else:
+                    try:
+                        times_differ = any(times != current_times)
+                    except TypeError:
+                        print times
+                        print current_times
+                        times_differ = times != current_times
+                    if times_differ:
+                        raise ValueError("Your neuron groups operate with different times (maybe you were adding a group after running?), this is not supported by Geppetto.")
             for variable_name, state_monitor in multi_state_monitor.iteritems():
                 # TODO: Iterating over the state monitor can cause a MemoryError for many steps and 32-bit versions of Python. Iterating over state_monitor._values solves this, but does not give the correct number of values.
                 # TODO: Try to find a workaround for this, or at least except the MemoryError and show a warning to use 64-bit version of Python (and Brian! -> Is this possible?).
                 print '\tAdding variable', variable_name
                 unit = str(state_monitor.unit)[4:]
-                unformatted_name = neuron_group_name + '.neuron{0}.' + variable_name
+                unformatted_name = neuron_group_name + '.Neuron{0}.' + variable_name
                 for neuron_index, variable_values in enumerate(state_monitor):
                     self.add_values(unformatted_name.format(neuron_index), variable_values, unit, MetaType.STATE_VARIABLE)
 

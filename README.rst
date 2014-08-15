@@ -53,12 +53,19 @@ If you can't await it, fire up the Python console and type:
 This will create a simple recording named *recording_file.h5* in you current directory.
 You can look at it with `HDFView <http://www.hdfgroup.org/products/java/hdfview/>`_.
 
+Feedback
+--------
+Got a great idea for a new feature? Found something you don't like? We are happy to hear from you!
+Get in touch through the `OpenWorm mailing list <https://groups.google.com/forum/#!forum/openworm-discuss>`_,
+open an issue on `GitHub <https://github.com/openworm/org.geppetto.recording>`_ or create a fork of this repository
+and start coding!
+
 Appendix: Installing NEURON and Brian
 -------------------------------------
 
 **NEURON**
 
-Unfortunately, the standard installer for NEURON won't do, you need to be able to run ``import neuron`` from the
+Unfortunately, the standard installer for NEURON isn't enough, you need to be able to run ``import neuron`` from the
 Python console.
 
 For OSX and Linux, there are some (unofficial)

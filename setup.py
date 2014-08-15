@@ -10,5 +10,6 @@ setup(
     license='MIT',
     author='Johannes Rieke, Matteo Cantarelli',
     author_email='matteo@geppetto.org',
-    description='Package to create a recording for Geppetto'
+    description='Package to create a recording for Geppetto',
+    keywords=['simulation', 'neuroscience', 'recording', 'neuron', 'brian']
 )
