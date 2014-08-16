@@ -7,8 +7,16 @@ import runpy
 import sys
 from org.geppetto.recording.creators.base import RecordingCreator, MetaType, is_text_file
 
+try:
+    import brian
+    brian_imported = True
+except ImportError:
+    brian_imported = False
 
-_brian_not_installed_error = ImportError("You have to install the brian package to use this method")
+
+def _assert_brian_imported():
+    if not brian_imported:
+        raise ImportError("You have to install the brian package to use this method")
 
 
 class BrianRecordingCreator(RecordingCreator):
@@ -64,11 +72,7 @@ class BrianRecordingCreator(RecordingCreator):
                 time = float(line[colon+2:])
                 self.add_values(unformatted_variable_name.format(index), time, 'ms', MetaType.EVENT)
         else:  # binary format from AERSpikeMonitor
-            try:
-                import brian
-            except ImportError:
-                raise _brian_not_installed_error
-
+            _assert_brian_imported()
             try:
                 indices, times = brian.load_aer(recording_filename)
             except Exception as e:
@@ -79,6 +83,147 @@ class BrianRecordingCreator(RecordingCreator):
             for index, time in zip(indices, times):
                 self.add_values(unformatted_variable_name.format(index), time, 'ms', MetaType.EVENT)
         return self
+
+    # TODO: Maybe change this and the other methods to record_model (without brian)
+    def record_brian_model_by_trace(self, model_filename):
+        self._assert_not_created()
+        _assert_brian_imported()
+
+        # All these use the same indices. The elements are sorted in creation order of the NeuronGroups
+        # (this is needed to handle duplicates).
+        neuron_groups = []
+        neuron_group_names = []
+        spike_monitors = []
+        multi_state_monitors = []
+
+        def append_neuron_group(group, name):
+            neuron_groups.append(group)
+            neuron_group_names.append(name)
+            spike_monitors.append(None)
+            multi_state_monitors.append(None)
+
+        def trace_model(frame, event, arg):
+            # Recognize all NeuronGroup's created in the model file or in a file that is run from the model file
+            # via execfile or import (not via runpy!).
+            if os.path.abspath(frame.f_code.co_filename) == model_abspath:
+                for name, var in frame.f_locals.iteritems():
+                    if isinstance(var, brian.NeuronGroup) and var not in neuron_groups:
+                        try:
+                            print 'Found new NeuronGroup:', name, var
+                        except:
+                            # TODO: Is probably unnecessary
+                            print '\tCannot print NeuronGroup'
+                        else:
+                            append_neuron_group(var, name)
+
+            # Recognize a call to brian's `run` or `Network.run` method.
+            if event == 'call' and frame.f_code.co_name == 'run':
+                print 'Reached run function'
+                if 'self' in frame.f_locals:
+                    possible_network = frame.f_locals['self']
+                    print '\tFound self:', possible_network
+                    try:
+                        groups = possible_network.groups
+                    except AttributeError:
+                        print '\tIs no network'
+                        pass  # not a Network
+                    else:
+                        print '\tIs network'
+                        for group in groups:
+                            try:
+                                index = neuron_groups.index(group)
+                            except ValueError:  # `group` is not in `neuron_groups`
+                                name = 'UnknownNeuronGroup' + str(id(group))
+                                append_neuron_group(group, name)
+                                index = -1
+
+                            print '\tRecognized neuron group:', neuron_group_names[index]
+                            if not spike_monitors[index]:
+                                spike_monitors[index] = brian.SpikeMonitor(neuron_groups[index], record=True)
+                            if not multi_state_monitors[index]:
+                                multi_state_monitors[index] = brian.MultiStateMonitor(neuron_groups[index], record=True)
+                            possible_network.add(spike_monitors[index])
+                            possible_network.add(multi_state_monitors[index])
+                            print '\tAdded its monitors'
+                        return None  # do not trace during simulation run
+            return trace_model
+
+        model_abspath = os.path.abspath(model_filename)
+        model_dirname = os.path.dirname(model_abspath)
+
+        # Append directory of the model file to system path (enables the model file to import local modules)
+        # and change Python's working directory to this directory (enables the model file to execute local files).
+        sys.path.append(model_dirname)
+        old_cwd = os.getcwd()
+        os.chdir(model_dirname)
+
+        sys.settrace(trace_model)
+        runpy.run_path(model_abspath, run_name='__main__', )
+        sys.settrace(None)
+
+        # Revert the changes affecting the system path and working directory (see above).
+        os.chdir(old_cwd)
+        sys.path.remove(model_dirname)
+
+        # Process all created monitors.
+        for neuron_group_name, neuron_group, spike_monitor, multi_state_monitor in zip(neuron_group_names, neuron_groups, spike_monitors, multi_state_monitors):
+            if spike_monitor:
+                self.add_spike_monitor(spike_monitor, neuron_group_name)
+            if multi_state_monitor:
+                self.add_multi_state_monitor(multi_state_monitor, neuron_group_name)
+
+    def add_spike_monitor(self, spike_monitor, neuron_group_name=None):
+        """Add all spike times in a SpikeMonitor from Brian to the recording."""
+        # TODO: Maybe just store the monitors here and process them during create; this way, they could be added before actually running the simulation.
+        self._assert_not_created()
+        unformatted_name = 'Neuron{0}.spikes'
+        # TODO: spike_monitor.P gives the NeuronGroup -> use its id as name here if neuron_group_name is empty?
+        # TODO: Maybe make neuron_group_name is False -> no neuron group, is True -> use id, is string -> use that one
+        if neuron_group_name:
+            unformatted_name = neuron_group_name + '.' + unformatted_name
+        for neuron_index, spike_times in spike_monitor.spiketimes.iteritems():
+            # TODO: Are spike times always in ms?
+            # TODO: Can spike_times be divided by brian.ms?
+            self.add_values(unformatted_name.format(neuron_index), spike_times, 'ms', MetaType.EVENT)
+        return self
+
+    def add_state_monitor(self, state_monitor, neuron_group_name=None):
+        """Add all values and times in a StateMonitor from Brian to the recording."""
+        self._assert_not_created()
+        _assert_brian_imported()
+
+        try:
+            times = state_monitor.times / brian.ms  # TODO: Can times be None if nothing was added to the monitor yet?
+        except IndexError:
+            #print '\tNot successful (this is normal for some groups like SpikeGeneratorGroup)'
+            print 'Could not get times'
+            pass  # this is normal for some groups like SpikeGeneratorGroup
+        else:
+            if times is not None and len(times) > 0:
+                if self.time_points is None:
+                    self.add_time_points(times, 'ms')
+                else:
+                    if not np.all(times == self.time_points):  # TODO: Check that this does not throw errors.
+                        raise ValueError("StateMonitor has different time points than already defined (maybe you were adding a group after running?).")
+
+        unit = str(state_monitor.unit)[4:]  # `state_monitor.unit` is something like `1 * V`
+        unformatted_name = 'Neuron{0}.' + state_monitor.varname
+        if neuron_group_name:
+            unformatted_name = neuron_group_name + '.' + unformatted_name
+        for neuron_index, values in enumerate(state_monitor):
+            self.add_values(unformatted_name.format(neuron_index), values, unit, MetaType.STATE_VARIABLE)
+        return self
+
+    def add_multi_state_monitor(self, multi_state_monitor, neuron_group_name=None):
+        """Add all values and times in a MultiStateMonitor from Brian to the recording."""
+        self._assert_not_created()
+        for state_monitor in multi_state_monitor.monitors.values():
+            # TODO: Iterating over the state monitor can cause a MemoryError for many steps and 32-bit versions of Python. Iterating over state_monitor._values solves this, but does not give the correct number of values.
+            # TODO: Try to find a workaround for this, or at least except the MemoryError and show a warning to use 64-bit version of Python (and Brian! -> Is this possible?).
+            self.add_state_monitor(state_monitor, neuron_group_name)
+        return self
+
+
 
     def record_brian_model(self, model_filename, temp_filename=None, overwrite_temp_file=True, remove_temp_file=True):
         """Simulate a Brian model, record all variables and add their values to the recording.
@@ -98,14 +243,9 @@ class BrianRecordingCreator(RecordingCreator):
             If True, remove the temporary file after the simulation was run (default).
 
         """
+        # TODO: Maybe include runtime and timestep to run the model from outside.
         self._assert_not_created()
-        # TODO: Include runtime and timestep to run the model from outside.
-
-        try:
-            import brian
-            from brian import Network, NeuronGroup, SpikeMonitor, MultiStateMonitor
-        except ImportError:
-            raise _brian_not_installed_error
+        _assert_brian_imported()
 
         # TODO: Rename variables so that there are no name conflicts with variables in the model file
         # TODO: Access brian classes via brian. to avoid name conflicts?

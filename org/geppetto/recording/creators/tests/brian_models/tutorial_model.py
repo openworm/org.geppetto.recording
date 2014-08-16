@@ -23,7 +23,9 @@ G_sub = G.subgroup(2)
 C = Connection(G, G)
 C.connect_random(sparseness=0.1, weight=psp)
 
-N = Network(G, C)
+#execfile('sub_model.py')
+
+N = Network(G, C)#, sub_group)
 #N2 = Network(G, C)
 
 run(0.1 * second)
