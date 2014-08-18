@@ -17,7 +17,7 @@ setup(
     version='0.0.1',
     packages=['org', 'org.geppetto', 'org.geppetto.recording', 'org.geppetto.recording.creators'],
     scripts=['scripts/record.py'],
-    install_requires=['numpy', 'h5py', 'enum'],
+    install_requires=['numpy', 'h5py', 'enum34'],
     url='http://github.com/openworm/org.geppetto.recording',
     download_url='http://github.com/openworm/org.geppetto.recording/tarball/0.0.1',
     license='MIT',

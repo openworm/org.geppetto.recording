@@ -10,7 +10,7 @@ Usage:
 ------
 
 record -neuron modelfile.hoc [recordingfile.h5]
-    Execute a NEURON model (experimental, only hoc!) and
+    Execute a NEURON model and
     store the simulation data in a Geppetto recording.
 
 record -brian modelfile.py [recordingfile.h5]
@@ -56,7 +56,7 @@ def main(argv):
             print '-------------------------------------------------------'
             print ''
             c = NeuronRecordingCreator(output_filename, overwrite=True)
-            c.record_neuron_model(model_filename)
+            c.record_model(model_filename)
         elif argv[0] == '-brian':
             print ''
             print '------------------------------------------------------'
@@ -64,7 +64,7 @@ def main(argv):
             print '------------------------------------------------------'
             print ''
             c = BrianRecordingCreator(output_filename, overwrite=True)
-            c.record_brian_model(model_filename)
+            c.record_model(model_filename)
 
         c.create()
         print ''
@@ -77,7 +77,7 @@ def main(argv):
         if cmd_in == 'y' or cmd_in == 'yes':
             print "This feature is coming soon, stay tuned!"
         elif cmd_in == 'n' or cmd_in == 'no':
-            print "Ok, try it next time, it's really awesome!"
+            print "Ok, we are still working on this anyway, stay tuned!"
     else:
         print 'I do not understand that...'
         print help_msg

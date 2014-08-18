@@ -6,6 +6,8 @@ You can import these from ``org.geppetto.recording.creators``
 RecordingCreator
 ----------------
 
+.. autoclass:: org.geppetto.recording.creators.base.MetaType
+
 .. autoclass:: org.geppetto.recording.creators.base.RecordingCreator
     :members:
     :undoc-members:

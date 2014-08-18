@@ -45,10 +45,18 @@ class NeuronRecordingCreatorTestCase(AbstractRecordingCreatorTestCase):
         self.register_recording_creator(c)
         self.assertRaises(IOError, c.add_neuron_recording, (os.path.join('neuron_recordings', 'binary_corrupted.dat')))
 
-    def test_model(self):
-        c = NeuronRecordingCreator('test_model.h5')
+    # TODO: Add test for add_vector
+
+    def test_hoc_model(self):
+        c = NeuronRecordingCreator('test_hoc_model.h5')
         self.register_recording_creator(c)
-        c.record_neuron_model(os.path.abspath('neuron_models/sthB.hoc'))#, tstop=0.05, dt=0.025)
+        c.record_model(os.path.abspath('neuron_models/sthB.hoc'))
+        c.create()
+
+    def test_py_model(self):
+        c = NeuronRecordingCreator('test_py_model.h5')
+        self.register_recording_creator(c)
+        c.record_model(os.path.abspath('neuron_models/sthB.py'))
         c.create()
 
 

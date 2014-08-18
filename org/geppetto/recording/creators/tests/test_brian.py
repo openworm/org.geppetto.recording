@@ -34,10 +34,12 @@ class BrianRecordingCreatorTestCase(AbstractRecordingCreatorTestCase):
         self.register_recording_creator(c)
         self.assertRaises(IOError, c.add_brian_recording, os.path.abspath('brian_recordings/aerspikemonitor_corrupted.aedat'))
 
+    # TODO: Add tests for add_monitor_...
+
     def test_model(self):
         c = BrianRecordingCreator('test_model.h5')
         self.register_recording_creator(c)
-        c.record_brian_model_by_trace(os.path.abspath('brian_models/tutorial_model.py'))
+        c.record_model(os.path.abspath('brian_models/tutorial_model.py'))
         # TODO: make short, deterministic model and run assertEquals
         c.create()
 

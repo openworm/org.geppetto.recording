@@ -40,21 +40,14 @@ for i = 0, num_dendrites-1 {
 connect dendrites[0](0), soma(0)
 connect dendrites[1](0), soma(1)
 
-// Create a stimulating electrode in the soma
 objectvar stimulus
 dendrites[0] stimulus = new IClamp(0.5)
 stimulus.del = 100
 stimulus.dur = 100
 stimulus.amp = 0.1
 
-tstop = 300
-
-printf("whatev")
-
-//objref p
-//p = new PythonObject()
-//p.a = 0.0
-
-//CVode.extra_scatter_gather(0, p)
-
+//tstop = 300
+//init()
 //run()
+
+//printf("Final soma voltage: %f", soma.v)
