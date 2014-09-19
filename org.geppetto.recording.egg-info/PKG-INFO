@@ -1,0 +1,17 @@
+Metadata-Version: 1.1
+Name: org.geppetto.recording
+Version: 0.1.0
+Summary: Package to create a recording for Geppetto
+Home-page: http://github.com/openworm/org.geppetto.recording
+Author: Johannes Rieke, Matteo Cantarelli
+Author-email: matteo@geppetto.org
+License: MIT
+Download-URL: http://github.com/openworm/org.geppetto.recording/tarball/0.0.1
+Description: This Python project creates recordings for `Geppetto <http://www.geppetto.org/>`_.
+        A recording is a file that contains all the raw data processed during a simulation run.
+        The recording files are based on the popular binary file format `HDF5 <http://www.hdfgroup.org/HDF5/>`_.
+        
+        For more information on installation and usage visit our
+        `GitHub repository <http://github.com/openworm/org.geppetto.recording>`_.
+Keywords: simulation,neuroscience,recording,neuron,brian
+Platform: UNKNOWN
