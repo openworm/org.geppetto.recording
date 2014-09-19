@@ -3,7 +3,7 @@ org.geppetto.recording
 
 Note: This is work in progress, mind your step!
 
-This Python project creates recordings for `Geppetto <www.geppetto.org>`_.
+This Python project creates recordings for `Geppetto <http://www.geppetto.org/>`_.
 A recording is a file that contains all the raw data processed during a simulation run.
 The recording files are based on the popular binary file format `HDF5 <http://www.hdfgroup.org/HDF5/>`_
 (more information to come).
@@ -15,19 +15,18 @@ Requirements
   (Tip: Use the 32bit version, it will save you a lot of trouble if you want to install NEURON and Brian later).
   Make sure that the *Python27* and *Python27/Scripts* directories are in your PATH environment variable.
 
-- **Python packages**: These should be loaded automatically if you install org.geppetto.recording.
-  If you want to do it manually, the simplest way is to use
-  pip (`Install information <http://pip.readthedocs.org/en/latest/installing.html>`_).
-  As soon as you have it, go to the command line and type::
+- **Python packages** (h5py, numpy, enum34): The simplest way to install these is pip
+  (`Get it here <http://pip.readthedocs.org/en/latest/installing.html>`_).
+  As soon as you've got pip set up, go to the command line and type::
 
     pip install h5py
     pip install numpy
-    pip install enum
+    pip install enum34
 
 - **NEURON and Brian (optional)**: Required to record simulations or read binary recordings
   from `NEURON <http://www.neuron.yale.edu/neuron/>`_ or `Brian <http://briansimulator.org/>`_.
   Note that for NEURON, the standard installer is not enough - you need to be able to run ``import neuron`` or
-  ``import brian`` from the Python console.
+  ``import brian``, respectively, from the Python console.
   For installation instructions, see the `Appendix: Installing NEURON and Brian`_.
 
 Installation
@@ -88,7 +87,7 @@ Keep in mind that this is not the easiest thing to do; if possible, use any of t
 
 **Brian**
 
-If you have `pip`, simply run::
+If you have *pip*, simply run::
 
     pip install brian
 

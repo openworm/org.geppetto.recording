@@ -1,4 +1,8 @@
-"""Implementation of the NEURON model in sthB.hoc for Python."""
+"""
+Small NEURON model with three sections (soma and 2 dendrites).
+Inspired by the NEURON tutorial, part B at http://www.anc.ed.ac.uk/school/neuron/tutorial/tutB.html
+Equivalent to sthB.hoc
+"""
 
 import neuron
 from neuron import h

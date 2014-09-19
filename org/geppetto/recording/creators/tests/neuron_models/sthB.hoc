@@ -1,3 +1,7 @@
+// Small NEURON model with three sections (soma and 2 dendrites).
+// Inspired by the NEURON tutorial, part B at http://www.anc.ed.ac.uk/school/neuron/tutorial/tutB.html
+// Equivalent to sthB.py
+
 load_file("nrngui.hoc")
 
 num_dendrites = 2
@@ -41,8 +45,8 @@ connect dendrites[0](0), soma(0)
 connect dendrites[1](0), soma(1)
 
 objectvar stimulus
-dendrites[0] stimulus = new IClamp(0.5)
-stimulus.del = 100
+dendrites[0] stimulus = new IClamp(0)
+stimulus.del = 0
 stimulus.dur = 100
 stimulus.amp = 0.1
 

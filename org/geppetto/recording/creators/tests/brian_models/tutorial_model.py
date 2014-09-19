@@ -1,6 +1,7 @@
-'''
-Model inspired by the Brian tutorial at http://www.briansimulator.org/docs/tutorial_1f_recording_spikes.html
-'''
+"""
+Small Brian model with one NeuronGroup.
+Inspired by the Brian tutorial at http://www.briansimulator.org/docs/tutorial_1f_recording_spikes.html.
+"""
 
 from brian import *
 import numpy
@@ -23,9 +24,6 @@ G_sub = G.subgroup(2)
 C = Connection(G, G)
 C.connect_random(sparseness=0.1, weight=psp)
 
-#execfile('sub_model.py')
-
-N = Network(G, C)#, sub_group)
-#N2 = Network(G, C)
+#N = Network(G, C)
 
 run(0.1 * second)

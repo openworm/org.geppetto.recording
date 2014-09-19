@@ -1,14 +1,14 @@
+"""Utility functions for org.geppetto.recording."""
+
 import os
 import runpy
 import string
 import sys
 
 
-# TODO: Are the methods here needed across multiple files?
-
-def is_text_file(filepath):
-    """Return True if the file is text, False if it is binary."""
-    with open(filepath, 'r') as f:
+def is_text_file(filename):
+    """Return `True` if the file is text, `False` if it is binary."""
+    with open(filename, 'r') as f:
         test_string = f.read(512)
         text_characters = ''.join(map(chr, range(32, 127)) + ['\n', '\r', '\t', '\b'])
         null_translation = string.maketrans('', '')
@@ -32,7 +32,7 @@ def make_iterable(object):
 
 
 def run_as_script(filename):
-    """Run a Python file as if it would be run from the command line."""
+    """Run a Python file as if it would be run from the command line (with name __main__ and its working directory)."""
     abspath = os.path.abspath(filename)
     dirname = os.path.dirname(abspath)
     sys.path.append(dirname)
@@ -45,7 +45,7 @@ def run_as_script(filename):
 
 
 def split_by_separators(s, separators=(' ', ',', ';', '\t')):
-    """Split a string by various separators (or any combination of them) and return the non-empty substrings as a list."""
+    """Split a string by all elements in `separators` (or any combination) and return a list of the substrings."""
     if not hasattr(separators, '__iter__'):
         separators = make_iterable(separators)
 

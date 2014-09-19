@@ -2,7 +2,6 @@ import h5py
 import numpy as np
 import os
 from enum import Enum
-import time
 
 
 class MetaType(Enum):
@@ -35,15 +34,14 @@ class RecordingCreator:
     Create one instance of this class per recording file.
     Add values for different types of variables with `add_values`. Successive values for one variable can be provided
     as an iterable or by calling `add_values` multiple times. If you store state variables that are associated with
-    time, create a time definition with either `set_time_step` or `add_time_points`. Add global metadata for the
-    recording with `add_metadata`. All these methods will return the `RecordingCreator` itself, so the method calls
-    can be chained.
+    time, call either `set_time_step` or `add_time_points`. Add global metadata for the recording with `add_metadata`.
+    All these methods will return the `RecordingCreator` itself, so the calls can be chained.
     If finished, call `create` to write all data to an HDF5 file.
 
     Parameters
     ----------
     filename : string
-        The path to the recording file that will be created.
+        The path of the recording file that will be created.
     simulator : string, optional
         The name of the simulator that was used to create the data in this recording.
     overwrite : boolean, optional
@@ -64,7 +62,6 @@ class RecordingCreator:
     """
 
     def __init__(self, filename, simulator='Not specified', overwrite=False):
-        # TODO: Add support for file to be reopened
         if os.path.isfile(filename) and not overwrite:
             raise IOError("File already exists, delete it or set the overwrite flag to proceed: " + filename)
         elif os.path.isdir(filename):
@@ -96,9 +93,9 @@ class RecordingCreator:
         return not self.created
 
     def _assert_not_created(self):
-        """Assert that the create method was not called yet."""
+        """Raise a RuntimeError if the file has already been created."""
         if self.created:
-            raise IOError("The recording file has already been created")
+            raise RuntimeError("The recording file has already been created")
 
     def _variable_exists(self, name):
         """Return `True` if the recording contains values for the variable `name`."""
@@ -128,11 +125,11 @@ class RecordingCreator:
         unit : string, optional
             The unit of the variable. If `None` (default), the unit from a previous definition of this variable
             will be used.
-        meta_type : {MetaType.STATE_VARIABLE, MetaType.PARAMETER, MetaType.PROPERTY, MetaType.EVENT}, optional
+        meta_type : member of enum MetaType, optional
             The type of the variable. If `None` (default), the meta type from a previous definition of this variable
             will be used.
         is_single_value : boolean, optional
-            If set to `True`, `values` will be stored as a single value for a single time point, even if it is iterable.
+            If `True`, `values` will be stored as a single value for a single time point, even if it is iterable.
 
         Returns
         -------
@@ -142,23 +139,24 @@ class RecordingCreator:
         """
         self._assert_not_created()
         if not name:
-            raise ValueError("Name must not be empty")
+            raise ValueError("Name cannot be empty")
         if meta_type is not None and meta_type not in MetaType:
             raise TypeError("Meta type is not a member of enum MetaType: " + str(meta_type))
         if not self._variable_exists(name):  # variable does not exist yet
-            # TODO: Use numpy arrays instead? -> Check performance of extending numpy arrays vs python lists
             self.values[name] = []
             self.units[name] = unit
             self.meta_types[name] = meta_type
         else:
             if meta_type is not None and meta_type != self.meta_types[name]:
-                raise ValueError("The meta type does not match with a previous definition of this variable")
+                raise ValueError("Meta type does not match with a previous definition of this variable")
             if unit is not None and unit != self.units[name]:
-                raise ValueError("The unit does not match with a previous definition of this variable")
+                raise ValueError("Unit does not match with a previous definition of this variable")
 
         if hasattr(values, '__iter__') and not is_single_value:
-            # TODO: This can cause a MemoryError for many steps and 32-bit versions of Python (depending on the OS, there are only 1 to 4 GB of memory available).
-            # TODO: Possible solution: Flush values to hdf5 file if they extend a certain size or if a MemoryError is raised.
+            # TODO: Can cause memory errors for many steps, especially on 32-bit versions of Python
+            # (depending on the OS, there are only 1 to 4 GB of memory available).
+            # TODO: Possible long-term solution: Flush values to hdf5 file if they extend a certain size or
+            # if a MemoryError is excepted.
             self.values[name].extend(values)
         else:
             self.values[name].append(values)
@@ -183,7 +181,7 @@ class RecordingCreator:
         """
         self._assert_not_created()
         if not name:
-            raise Exception('Supply a name and be a good boy')
+            raise Exception("Name cannot be empty")
         self.metadata[name] = value
         return self
 
@@ -215,7 +213,7 @@ class RecordingCreator:
         if not time_step > 0:
             raise ValueError("Time step must be larger than 0, is: " + str(time_step))
         if self.time_points is not None:
-            raise RuntimeError("Time points were already added, use either a fixed time step OR time points")
+            raise RuntimeError("Previous call to add_time_points, use only one of set_time_step and add_time_points")
         self.time_step = time_step
         self.time_unit = unit
         return self
@@ -246,53 +244,31 @@ class RecordingCreator:
         """
         self._assert_not_created()
         if self.time_step is not None:
-            raise RuntimeError("A fixed time step was already set, use either a fixed time step OR time points")
+            raise RuntimeError("Previous call to set_time_step, use only one of add_time_points and set_time_step")
         if self.time_points is None:
             self.time_points = []
             self.time_unit = unit
         else:
             if unit is not None and unit != self.time_unit:
-                raise ValueError("The unit does not match with a previous definition of time points")
+                raise ValueError("Unit does not match with a previous definition of time points")
         if hasattr(time_points, '__iter__'):
             self.time_points.extend(time_points)
         else:
             self.time_points.append(time_points)
         return self
 
-    # def set_time(self, time_step_or_vector, unit):
-    #     self._assert_not_created()
-    #     if self.time is not None:
-    #         raise RuntimeError("Time has already been defined")
-    #     if time_step_or_vector is None:
-    #         raise ValueError("Supply a time step or vector and be a good boy")
-    #     elif not hasattr(time_step_or_vector, '__iter__') and time_step_or_vector == 0:
-    #         raise ValueError("The time step cannot be 0")
-    #     elif hasattr(time_step_or_vector, '__iter__') and len(time_step_or_vector) == 0:
-    #         raise ValueError("The time vector cannot be empty")
-    #     self.time = time_step_or_vector  # will be parsed in _process_added_data
-    #     self.time_unit = unit
-    #     return self
-
-    def create(self, verbose=False):
+    def create(self):
         """Create the recording file and write all data to it.
 
-        This has to be the last call to the `RecordingCreator`. Any further method calls will raise errors.
-
-        Parameters
-        ----------
-        verbose : boolean, optional
-            If set to True, will print additional information.
+        This has to be the last call to the `RecordingCreator`. Any further method calls will raise a RuntimeError.
 
         """
         self._assert_not_created()
         with h5py.File(self.filename, 'w') as f:  # overwrite a previous file
-            # TODO: Do this with logging?
-            if verbose:
-                print 'Writing file...'
-                start_time = time.time()
+            # print 'Writing file...'
+            # start_time = time.time()
             self._process_added_data(f)
-            if verbose:
-                print 'Time to write file:', time.time() - start_time
+            # print 'Time to write file:', time.time() - start_time
         self.created = True
 
     def _process_added_data(self, f):
@@ -319,18 +295,6 @@ class RecordingCreator:
             f['time'] = np.linspace(0, max_num_steps * self.time_step, max_num_steps, endpoint=False)
             f['time'].attrs['unit'] = self.time_unit
 
-        # is_time_vector = hasattr(self.time, '__iter__')
-        # if max_num_steps or is_time_vector:  # do not write time for a fixed time step and no state variables
-        #     if self.time is None:
-        #         raise RuntimeError("There are state variables but no time is defined, call set_time")
-        #     if is_time_vector:
-        #         if len(self.time) < max_num_steps:
-        #             raise IndexError("The number of steps in the time vector is smaller than the number of values in the state variables")
-        #     else:  # fixed time step
-        #         self.time = np.linspace(0, max_num_steps * self.time, max_num_steps, endpoint=False)
-        #     f['time'] = self.time
-        #     f['time'].attrs['unit'] = self.time_unit
-
         for name in self.values.keys():
             path = name.replace('.', '/')
             try:
@@ -338,6 +302,4 @@ class RecordingCreator:
                 f[path].attrs['unit'] = self.units[name]
                 f[path].attrs['meta_type'] = str(self.meta_types[name])
             except RuntimeError:
-                # TODO: What are ALL the reasons that raise this exception?
-                # TODO: Should the case 'A previous leaf is now referred to as a type' be explicitly mentioned in the error message?
-                raise ValueError("Cannot write dataset for variable " + name)
+                raise ValueError("Cannot write dataset for variable: " + name)

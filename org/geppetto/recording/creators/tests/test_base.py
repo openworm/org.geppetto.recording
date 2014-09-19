@@ -1,9 +1,10 @@
 import unittest
 from org.geppetto.recording.creators import RecordingCreator, MetaType
-from org.geppetto.recording.creators.tests.abstest import AbstractRecordingCreatorTestCase
+from org.geppetto.recording.creators.tests.abstest import AbstractTestCase
 
 
-class RecordingCreatorTestCase(AbstractRecordingCreatorTestCase):
+class RecordingCreatorTestCase(AbstractTestCase):
+    """Unittests for the basic RecordingCreator class."""
 
     def test_values(self):
         c = RecordingCreator('test_values.h5')
@@ -52,7 +53,7 @@ class RecordingCreatorTestCase(AbstractRecordingCreatorTestCase):
         c = RecordingCreator('test_add_after_create.h5')
         self.register_recording_creator(c)
         c.create()
-        self.assertRaises(IOError, c.add_metadata, 'meta', 'data')
+        self.assertRaises(RuntimeError, c.add_metadata, 'meta', 'data')
 
 
 if __name__ == '__main__':
