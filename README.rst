@@ -13,9 +13,10 @@ Requirements
   (Tip: Use the 32bit version, it will save you a lot of trouble if you want to install NEURON and Brian later).
   Make sure that the *Python27* and *Python27/Scripts* directories are in your PATH environment variable.
 
-- **Python packages** (h5py, numpy, enum34): The simplest way to install these is pip
+- **Python packages** (h5py, numpy, enum34): If you use pip to install org.geppetto.recording (see below), these
+  packages will be installed automatically as needed. If you want to install them manually, use pip
   (`Get it here <http://pip.readthedocs.org/en/latest/installing.html>`_).
-  As soon as you've got pip set up, go to the command line and type::
+  and type on the command line::
 
     pip install h5py
     pip install numpy
@@ -29,8 +30,13 @@ Requirements
 
 Installation
 ------------
-If you installed all requirements, download or clone the source code from this repository.
-Fire up the command line, navigate into the org.geppetto.recording folder (the one containing this *README*) and type::
+If you installed all requirements, use pip (`Get it here <http://pip.readthedocs.org/en/latest/installing.html>`_) to
+install org.geppetto.recording::
+
+    pip install org.geppetto.recording
+
+Alternatively, download or clone the source code from this repository. Fire up the command line, navigate into
+the org.geppetto.recording folder (the one containing this *README*) and type::
 
     python setup.py install
 

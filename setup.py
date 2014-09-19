@@ -17,7 +17,6 @@ setup(
     scripts=['scripts/record.py'],
     install_requires=['numpy', 'h5py', 'enum34'],
     url='http://github.com/openworm/org.geppetto.recording',
-    download_url='http://github.com/openworm/org.geppetto.recording/tarball/0.0.1',
     license='MIT',
     author='Johannes Rieke, Matteo Cantarelli',
     author_email='matteo@geppetto.org',
