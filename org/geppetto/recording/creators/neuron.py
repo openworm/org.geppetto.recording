@@ -278,7 +278,6 @@ class NeuronRecordingCreator(RecordingCreator):
             raise IOError("Binary file could not be parsed or is empty: " + recording_file)
         return self
 
-    # TODO: Calling this method multiple times with hoc models could populate allsec with all sections from all models. Investigate this and possibly find a workaround.
     def record_model(self, model_filename, tstop=None, dt=None, format=None):
         """Execute a NEURON simulation, try to record all variables and add their values to the recording.
 
@@ -302,6 +301,8 @@ class NeuronRecordingCreator(RecordingCreator):
             The format of the model file. If `None` (default), use the file extension.
 
         """
+        # TODO: Calling this method multiple times with hoc models could populate allsec with all sections from all models. Investigate this and possibly find a workaround.
+
         self._assert_not_created()
         _assert_neuron_imported()
 

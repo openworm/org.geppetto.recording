@@ -12,7 +12,7 @@ For more information on installation and usage visit our
 
 setup(
     name='org.geppetto.recording',
-    version='0.0.1',
+    version='0.1.0',
     packages=['org', 'org.geppetto', 'org.geppetto.recording', 'org.geppetto.recording.creators'],
     scripts=['scripts/record.py'],
     install_requires=['numpy', 'h5py', 'enum34'],
