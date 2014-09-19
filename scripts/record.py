@@ -10,11 +10,11 @@ Usage:
 ------
 
 record -neuron modelfile.hoc [recordingfile.h5]
-    Execute a NEURON model and
+    Execute a NEURON model (.hoc or .py) and
     store the simulation data in a Geppetto recording.
 
 record -brian modelfile.py [recordingfile.h5]
-    Execute a Brian model and
+    Execute a Brian model (.py) and
     store the simulation data in a Geppetto recording.
 
 record help

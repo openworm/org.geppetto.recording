@@ -3,8 +3,8 @@ Scripts
 
 Don't want to delve into the code? Use the **record.py** script!
 
-It's so easy: 4 words on your command line and you can replay your NEURON and Brian simulations in Geppetto.
-The script takes a model file (.hoc for NEURON - *experimental*, .py for Brian), executes it and stores all simulation data in a
+It's super easy: 4 words on the command line and you can replay your NEURON and Brian simulations in Geppetto.
+The script takes a model file (.hoc or .py for NEURON, .py for Brian), executes it and stores all simulation data in a
 Geppetto recording. Load this into Geppetto and watch your nerves lighting up!
 
 Usage

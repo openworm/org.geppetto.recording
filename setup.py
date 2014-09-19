@@ -3,9 +3,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
-LONG_DESCRIPTION = """Note: This is work in progress, mind your step!
-
-This Python project creates recordings for `Geppetto <http://www.geppetto.org/>`_.
+LONG_DESCRIPTION = """This Python project creates recordings for `Geppetto <http://www.geppetto.org/>`_.
 A recording is a file that contains all the raw data processed during a simulation run.
 The recording files are based on the popular binary file format `HDF5 <http://www.hdfgroup.org/HDF5/>`_.
 

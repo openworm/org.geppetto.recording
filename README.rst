@@ -1,8 +1,6 @@
 org.geppetto.recording
 ======================
 
-Note: This is work in progress, mind your step!
-
 This Python project creates recordings for `Geppetto <http://www.geppetto.org/>`_.
 A recording is a file that contains all the raw data processed during a simulation run.
 The recording files are based on the popular binary file format `HDF5 <http://www.hdfgroup.org/HDF5/>`_
@@ -87,7 +85,7 @@ Keep in mind that this is not the easiest thing to do; if possible, use any of t
 
 **Brian**
 
-If you have *pip*, simply run::
+If you have pip, simply run::
 
     pip install brian
 
