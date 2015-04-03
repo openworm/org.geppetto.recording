@@ -20,11 +20,15 @@ class MetaType(Enum):
     EVENT
         A variable that describes time points at which a certain condition was satisfied.
 
+    VISUAL_TRANSFORMATION
+        A variable that describes visual transformations.
+
     """
     STATE_VARIABLE = 1
     PARAMETER = 2
     PROPERTY = 3
     EVENT = 4
+    VISUAL_TRANSFORMATION = 5
 
 
 class RecordingCreator:

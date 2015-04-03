@@ -26,7 +26,7 @@ class BrianRecordingCreator(RecordingCreator):
     1. Provide a model file for Brian: The creator will execute the simulation, monitor all variables while running
        and add their values to the recording (see `record_brian_model`).
     2. Provide a recording file from Brian (created through `brian.FileSpikeMonitor` or `brian.AERSpikeMonitor`):
-       The creator will read it and add all values to the recording (see `add_brian_recording`).
+       The creator will read it and add all values to the recording (see `add_recording`).
     3. Use the creator inside a Brian simulation and provide a monitor from Brian: The creator will add all the values
        in this monitor to the recording (see `add_spike_monitor`, `add_state_monitor` and
        `add_multi_state_monitor`).
