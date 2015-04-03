@@ -70,7 +70,7 @@ class SPHRecordingCreator(RecordingCreator):
         for i in range(step_start, step_end+1, sampling_factor):
 
             # generate suffix for filename (based on arbitrary padding on file names ... )
-            transform_file_suffix = self._pad_number(i, 4)
+            transform_file_suffix = utils.pad_number(i, 4)
 
             transformations = []
             # Read transformation file for the given time step
@@ -113,34 +113,3 @@ class SPHRecordingCreator(RecordingCreator):
                 #TODO Activation signals for given timestep by muscle name
 
         return self
-
-    def _pad_number(self, number, padding):
-        """
-
-        Parameters
-        ----------
-        number : integer
-            Number to pad.
-        padding : integer
-            Padding dimension.
-
-        Returns
-        -------
-        String
-            The padded string
-
-        """
-
-        result = "test"
-
-        if number != 0:
-            while (np.pow(10, padding) > number):
-                result += "0"
-                padding -= 1
-        else:
-            for i in range(0, padding):
-                result += "0"
-
-        result += number
-
-        return result

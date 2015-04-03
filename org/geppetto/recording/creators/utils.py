@@ -4,6 +4,7 @@ import os
 import runpy
 import string
 import sys
+import math
 
 
 def is_text_file(filename):
@@ -69,3 +70,35 @@ def split_by_separators(s, separators=(' ', ',', ';', '\t')):
         s = s[next_separator_end:]
 
     return substrings
+
+
+def pad_number(number, padding):
+    """
+
+    Parameters
+    ----------
+    number : integer
+        Number to pad.
+    padding : integer
+        Padding dimension.
+
+    Returns
+    -------
+    String
+        The padded string
+
+    """
+
+    result = "0"
+
+    if number != 0:
+        while math.pow(10, padding) > number:
+            result += "0"
+            padding -= 1
+    else:
+        for i in range(0, padding):
+            result += "0"
+
+    result += number
+
+    return result
