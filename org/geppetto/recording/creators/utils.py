@@ -99,6 +99,6 @@ def pad_number(number, padding):
         for i in range(0, padding):
             result += "0"
 
-    result += number
+    result += str(number)
 
     return result

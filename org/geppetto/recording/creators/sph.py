@@ -24,12 +24,12 @@ class SPHRecordingCreator(RecordingCreator):
     def __init__(self, filename, overwrite=False):
         RecordingCreator.__init__(self, filename, 'SPH', overwrite)
 
-    def create_recording(self,
-                         transforms_filename,
-                         activations_filename,
-                         step_start, step_end,
-                         sampling_factor,
-                         transform_matrix_dimension):
+    def add_recording(self,
+                      transforms_filename,
+                      activations_filename,
+                      step_start, step_end,
+                      sampling_factor,
+                      transform_matrix_dimension):
         """
 
         Parameters
@@ -66,50 +66,39 @@ class SPHRecordingCreator(RecordingCreator):
         else:  # Raise exception
             raise StandardError("Activation signals file is not a text file as expected.")
 
-        # Loop through time steps in range, run one loop every sampling_factor
+        # Loop through time steps (one per file) in range, run one loop every sampling_factor
         for i in range(step_start, step_end+1, sampling_factor):
 
-            # generate suffix for filename (based on arbitrary padding on file names ... )
-            transform_file_suffix = utils.pad_number(i, 4)
+            step_transformations = []
 
-            transformations = []
+            # generate suffix for filename (based on arbitrary padding on file names ... )
+            transform_file_suffix = utils.pad_number(i, 3) + '.mat'
+
             # Read transformation file for the given time step
             if is_text_file(transforms_filename + transform_file_suffix):  # text format for activation signals file
                 with open(transforms_filename + transform_file_suffix, 'r') as r:
                     file_content = r.read()
 
-                matrices = []
                 line_periodicity_idx = 0
                 for j, line in enumerate(file_content.splitlines()):
 
                     # skip one line every transform_matrix_dimension lines
-                    if line_periodicity_idx == (transform_matrix_dimension - 1):
+                    if line_periodicity_idx == (transform_matrix_dimension):
                         line_periodicity_idx = 0
                         continue
 
-                    # Put transformation matrices into appropriate data structures
-                    matrix_lines = []
-                    for k in range(0, transform_matrix_dimension):
-                        # TODO: convert retrieved values into float
-                        matrix_lines.append(utils.split_by_separators(line))
-
-                    # create matrix every transform_matrix_dimension lines
-                    matrix = np.matrix((transform_matrix_dimension, transform_matrix_dimension))
-                    for k in range(0, transform_matrix_dimension):
-                        matrix.append(matrix_lines[k])
-
-                    # add matrix to matrices array
-                    matrices.append(matrix)
+                    step_transformations.append(utils.split_by_separators(line))
 
                     # increase periodicity index
                     line_periodicity_idx += 1
-
-                transformations.append(matrices)
             else:  # Raise exception
                 raise StandardError("Transformations file " + i + " is not a text file as expected.")
 
-            #TODO Add step to recording with data for given timestep
-                #TODO Transformation matrices for given timestep
-                #TODO Activation signals for given timestep by muscle name
+            # Add step to recording with data for given timestep
+            # 1. Transformation matrices for given timestep
+            self.add_values('wormsim.visual_transformation', step_transformations, 'ms', MetaType.VISUAL_TRANSFORMATION)
+            # 2. Activation signals for given timestep by muscle name
+            for m in range(0, len(activation_signals[i])):
+                self.add_values('wormsim.muscle_' + str(m), activation_signals[i][m], 'ms', MetaType.STATE_VARIABLE)
 
         return self
