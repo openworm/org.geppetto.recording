@@ -30,6 +30,7 @@ class AbstractTestCase(unittest.TestCase):
             unittest.TestCase.assertAlmostEquals(self, first, second, places, msg, delta)
 
     def tearDown(self):
+
         if self.REMOVE_FILES_AFTER_TEST:
             for filename in self.filenames:
                 try:

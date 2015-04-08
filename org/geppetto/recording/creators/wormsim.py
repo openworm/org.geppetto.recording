@@ -5,7 +5,7 @@ from org.geppetto.recording.creators.base import RecordingCreator, MetaType
 from org.geppetto.recording.creators.utils import *
 
 
-class SPHRecordingCreator(RecordingCreator):
+class WormSimRecordingCreator(RecordingCreator):
     """
     A RecordingCreator that builds a recording file given SPH derived visual transformations and activation signals.
 
@@ -55,14 +55,16 @@ class SPHRecordingCreator(RecordingCreator):
         """
         self._assert_not_created()
 
+        self.set_time_step(0.000005*sampling_factor, 's')
+
         # Read activation signals into a list of arrays
         activation_signals = []
         if is_text_file(activations_filename):  # text format for activation signals file
             with open(activations_filename, 'r') as r:
                 file_content = r.read()
             for i, line in enumerate(file_content.splitlines()):
-                # TODO: convert retrieved values into float
-                activation_signals.append(utils.split_by_separators(line))
+                # convert retrieved values into float and append
+                activation_signals.append([float(numeric_string) for numeric_string in utils.split_by_separators(line)])
         else:  # Raise exception
             raise StandardError("Activation signals file is not a text file as expected.")
 
@@ -87,18 +89,20 @@ class SPHRecordingCreator(RecordingCreator):
                         line_periodicity_idx = 0
                         continue
 
-                    step_transformations.append(utils.split_by_separators(line))
+                    # convert to float and append
+                    step_transformations.append([float(numeric_string) for numeric_string in utils.split_by_separators(line)])
 
                     # increase periodicity index
                     line_periodicity_idx += 1
             else:  # Raise exception
                 raise StandardError("Transformations file " + i + " is not a text file as expected.")
 
-            # Add step to recording with data for given timestep
+            # Add step values to recording with data for given timestep
+
             # 1. Transformation matrices for given timestep
-            self.add_values('wormsim.visual_transformation', step_transformations, 'ms', MetaType.VISUAL_TRANSFORMATION)
+            self.add_values('wormsim.mechanical.VISUALIZATION_TREE.transformation', step_transformations, 'DimensionlessUnit', MetaType.VISUAL_TRANSFORMATION)
             # 2. Activation signals for given timestep by muscle name
             for m in range(0, len(activation_signals[i])):
-                self.add_values('wormsim.muscle_' + str(m), activation_signals[i][m], 'ms', MetaType.STATE_VARIABLE)
+                self.add_values('wormsim.muscle_' + str(m) + '.mechanical.SIMULATION_TREE.activation', activation_signals[i][m], 'DimensionlessUnit', MetaType.STATE_VARIABLE)
 
         return self
