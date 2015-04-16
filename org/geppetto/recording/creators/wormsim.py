@@ -100,7 +100,7 @@ class WormSimRecordingCreator(RecordingCreator):
             # Add step values to recording with data for given timestep
 
             # 1. Transformation matrices for given timestep
-            self.add_values('wormsim.mechanical.VISUALIZATION_TREE.transformation', step_transformations, 'DimensionlessUnit', MetaType.VISUAL_TRANSFORMATION)
+            self.add_values('wormsim.mechanical.VISUALIZATION_TREE.transformation', step_transformations, 'DimensionlessUnit', MetaType.VISUAL_TRANSFORMATION, True)
             # 2. Activation signals for given timestep by muscle name
             for m in range(0, len(activation_signals[i])):
                 self.add_values('wormsim.muscle_' + str(m) + '.mechanical.SIMULATION_TREE.activation', activation_signals[i][m], 'DimensionlessUnit', MetaType.STATE_VARIABLE)

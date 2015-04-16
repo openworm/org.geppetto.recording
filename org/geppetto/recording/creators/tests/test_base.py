@@ -55,6 +55,16 @@ class RecordingCreatorTestCase(AbstractTestCase):
         c.create()
         self.assertRaises(RuntimeError, c.add_metadata, 'meta', 'data')
 
+    def test_matrix(self):
+        c = RecordingCreator('test_matrix.h5')
+        self.register_recording_creator(c)
+        c.set_time_step(1, 's')
+        c.add_values('a.var', [[1, 2, 3], [4, 5, 6], [7, 8, 9]], 'DimensionlessUnit', MetaType.STATE_VARIABLE, True)
+        c.add_values('a.var', [[10, 11, 12], [13, 14, 15], [16, 17, 18]], 'DimensionlessUnit', MetaType.STATE_VARIABLE, True)
+        self.assertEquals(c.values['a.var'], [[[1, 2, 3], [4, 5, 6], [7, 8, 9]], [[10, 11, 12], [13, 14, 15], [16, 17, 18]]])
+        self.assertEquals(c.units['a.var'], 'DimensionlessUnit')
+        c.create()
+
 
 if __name__ == '__main__':
     unittest.main()  # automatically executes all methods above that start with 'test_'
