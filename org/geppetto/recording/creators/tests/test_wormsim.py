@@ -31,7 +31,7 @@ class WormSimRecordingCreatorTestCase(AbstractTestCase):
         c.create()
 
     def test_text_recording_with_downsampling(self):
-        c = WormSimRecordingCreator('test_wormsim_recording.h5')
+        c = WormSimRecordingCreator('test_10x_downsampled_wormsim_recording.h5')
         self.register_recording_creator(c)
 
         c.add_recording(os.path.abspath('wormsim_recordings/transformations/matrix_anchored_31S_'),

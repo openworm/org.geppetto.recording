@@ -45,7 +45,7 @@ class WormSimRecordingCreator(RecordingCreator):
         sampling_factor : integer
             Sampling factor for original source (i.e. 1 = all the steps, 10 = 1 steps every 10, etc.).
         transform_matrix_dimension : integer
-            Dimension of the transformation matrix.
+            Dimension of the transformation matrix (always quadratic).
 
         Returns
         -------
@@ -55,6 +55,11 @@ class WormSimRecordingCreator(RecordingCreator):
         """
         self._assert_not_created()
 
+        # Set metadata
+        self.add_metadata('version', 1)
+        self.add_metadata('transform_matrix_dimension', transform_matrix_dimension)
+
+        # Set time step
         self.set_time_step(0.000005*sampling_factor, 's')
 
         # Read activation signals into a list of arrays
@@ -90,7 +95,8 @@ class WormSimRecordingCreator(RecordingCreator):
                         continue
 
                     # convert to float and append
-                    step_transformations.append([float(numeric_string) for numeric_string in utils.split_by_separators(line)])
+                    # step_transformations.append([float(numeric_string) for numeric_string in utils.split_by_separators(line)])
+                    step_transformations.extend([float(numeric_string) for numeric_string in utils.split_by_separators(line)])
 
                     # increase periodicity index
                     line_periodicity_idx += 1
