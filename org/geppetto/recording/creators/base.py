@@ -133,7 +133,8 @@ class RecordingCreator:
             The type of the variable. If `None` (default), the meta type from a previous definition of this variable
             will be used.
         is_single_value : boolean, optional
-            If `True`, `values` will be stored as a single value for a single time point, even if it is iterable.
+            If `True`, `values` will be stored as a single value for a single time point, even if it is iterable. 
+            (Be aware that HDF View visualizes such multi dimensional data in a pretty unintuitive way)
 
         Returns
         -------
