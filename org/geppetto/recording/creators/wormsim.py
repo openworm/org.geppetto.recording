@@ -95,35 +95,24 @@ class WormSimRecordingCreator(RecordingCreator):
                         continue
 
                     # convert to float and append
-                    step_transformations.append([float(numeric_string) for numeric_string in utils.split_by_separators(line)])
+                    step_transformations.extend([float(numeric_string) for numeric_string in utils.split_by_separators(line)])
 
                     # increase periodicity index
                     line_periodicity_idx += 1
             else:  # Raise exception
                 raise StandardError("Transformations file " + i + " is not a text file as expected.")
 
-            # Convert step_transformations into an array of quadratic matrices (transform_matrix_dimension)
-            matrix_periodicity_idx = 0
-            step_transformations_matrices = []
-            matrix = []
-            for x, row in enumerate(step_transformations):
-
-                # skip one line every transform_matrix_dimension lines
-                if matrix_periodicity_idx < transform_matrix_dimension:
-                    # add to matrix
-                    matrix.append(row)
-                    matrix_periodicity_idx += 1
-
-                if matrix_periodicity_idx == transform_matrix_dimension:
-                    step_transformations_matrices.append(matrix)
-                    matrix = []
-                    matrix_periodicity_idx = 0
+            items_per_step = len(step_transformations) / transform_matrix_dimension*transform_matrix_dimension
+            custom_metadata = "dimension={0};items_per_step={1}".format(transform_matrix_dimension, items_per_step)
 
             # Add step values to recording with data for given timestep
             # 1. Transformation matrices for given timestep
-            self.add_values('wormsim.mechanical.VISUALIZATION_TREE.transformation', step_transformations_matrices, 'DimensionlessUnit', MetaType.VISUAL_TRANSFORMATION, True)
+            self.add_values('wormsim.mechanical.VisualizationTree.transformation',
+                            step_transformations, 'DimensionlessUnit',
+                            MetaType.VISUAL_TRANSFORMATION, True, custom_metadata)
             # 2. Activation signals for given timestep by muscle name
             for m in range(0, len(activation_signals[i])):
-                self.add_values('wormsim.muscle_' + str(m) + '.mechanical.SIMULATION_TREE.activation', activation_signals[i][m], 'DimensionlessUnit', MetaType.STATE_VARIABLE)
+                self.add_values('wormsim.muscle_' + str(m) + '.mechanical.SimulationTree.activation',
+                                activation_signals[i][m], 'DimensionlessUnit', MetaType.STATE_VARIABLE)
 
         return self

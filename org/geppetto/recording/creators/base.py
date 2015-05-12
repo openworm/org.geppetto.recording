@@ -75,6 +75,7 @@ class RecordingCreator:
         self.values = {}
         self.units = {}
         self.meta_types = {}
+        self.custom_metadata = {}
         self.time_points = None
         self.time_step = None
         self.time_unit = None
@@ -112,7 +113,7 @@ class RecordingCreator:
             i += 1
         return 1
 
-    def add_values(self, name, values, unit=None, meta_type=None, is_single_value=False):
+    def add_values(self, name, values, unit=None, meta_type=None, is_single_value=False, custom_metadata=None):
         """Add one or multiple values for a variable to the recording.
 
         If values for this variable were added before, the new values will be appended. In this case, you can
@@ -150,6 +151,7 @@ class RecordingCreator:
         if not self._variable_exists(name):  # variable does not exist yet
             self.values[name] = []
             self.units[name] = unit
+            self.custom_metadata[name] = custom_metadata
             self.meta_types[name] = meta_type
         else:
             if meta_type is not None and meta_type != self.meta_types[name]:
@@ -305,6 +307,7 @@ class RecordingCreator:
             try:
                 f[path] = self.values[name]
                 f[path].attrs['unit'] = self.units[name]
+                f[path].attrs['custom_metadata'] = str(self.custom_metadata[name])
                 f[path].attrs['meta_type'] = str(self.meta_types[name])
             except RuntimeError:
                 raise ValueError("Cannot write dataset for variable: " + name)

@@ -21,23 +21,15 @@ class WormSimRecordingCreatorTestCase(AbstractTestCase):
         self.assertEquals(c.time_unit, 's')
 
         # Test some values
-        self.assertEquals(c.values['wormsim.muscle_0.mechanical.SIMULATION_TREE.activation'][0], 0.575365)
-        self.assertEquals(c.values['wormsim.muscle_0.mechanical.SIMULATION_TREE.activation'][1], 0.57586)
-        self.assertEquals(c.values['wormsim.muscle_0.mechanical.SIMULATION_TREE.activation'][2], 0.576354)
-        self.assertEquals(c.values['wormsim.muscle_0.mechanical.SIMULATION_TREE.activation'][3], 0.576848)
+        self.assertEquals(c.values['wormsim.muscle_0.mechanical.SimulationTree.activation'][0], 0.575365)
+        self.assertEquals(c.values['wormsim.muscle_0.mechanical.SimulationTree.activation'][1], 0.57586)
+        self.assertEquals(c.values['wormsim.muscle_0.mechanical.SimulationTree.activation'][2], 0.576354)
+        self.assertEquals(c.values['wormsim.muscle_0.mechanical.SimulationTree.activation'][3], 0.576848)
 
         # Test transformations
-        length = len(c.values['wormsim.mechanical.VISUALIZATION_TREE.transformation'][0])
-        self.assertEquals(c.values['wormsim.mechanical.VISUALIZATION_TREE.transformation'][0][0],
-                          [[1.0, 0.0, 0.0, 0.0],
-                           [0.0, 1.0, 0.0, 0.0],
-                           [0.0, 0.0, 1.0, 0.0],
-                           [-17.3712, 48.8013, 12.7259, 1.0]])
-        self.assertEquals(c.values['wormsim.mechanical.VISUALIZATION_TREE.transformation'][0][length-1],
-                          [[0.83888, 0.54409, 0.0157082, 0.0],
-                           [-0.423692, 0.651937, 0.0454791, 0.0],
-                           [0.0186224, -0.0575298, 0.99817, 0.0],
-                           [208.844, 127.149, -23.521, 1.0]])
+        length = len(c.values['wormsim.mechanical.VisualizationTree.transformation'][0])
+        self.assertEquals(c.values['wormsim.mechanical.VisualizationTree.transformation'][0][0], 1.0)
+        self.assertEquals(c.values['wormsim.mechanical.VisualizationTree.transformation'][0][length-2], -23.521)
 
         c.create()
 
@@ -54,23 +46,15 @@ class WormSimRecordingCreatorTestCase(AbstractTestCase):
         self.assertEquals(c.time_unit, 's')
 
         # Test some values
-        self.assertEquals(c.values['wormsim.muscle_0.mechanical.SIMULATION_TREE.activation'][0], 0.575365)
-        self.assertEquals(c.values['wormsim.muscle_0.mechanical.SIMULATION_TREE.activation'][1], 0.580304)
-        self.assertEquals(c.values['wormsim.muscle_0.mechanical.SIMULATION_TREE.activation'][2], 0.585235)
-        self.assertEquals(c.values['wormsim.muscle_0.mechanical.SIMULATION_TREE.activation'][3], 0.590158)
+        self.assertEquals(c.values['wormsim.muscle_0.mechanical.SimulationTree.activation'][0], 0.575365)
+        self.assertEquals(c.values['wormsim.muscle_0.mechanical.SimulationTree.activation'][1], 0.580304)
+        self.assertEquals(c.values['wormsim.muscle_0.mechanical.SimulationTree.activation'][2], 0.585235)
+        self.assertEquals(c.values['wormsim.muscle_0.mechanical.SimulationTree.activation'][3], 0.590158)
 
         # Test transformations
-        length = len(c.values['wormsim.mechanical.VISUALIZATION_TREE.transformation'][0])
-        self.assertEquals(c.values['wormsim.mechanical.VISUALIZATION_TREE.transformation'][0][0],
-                          [[1.0, 0.0, 0.0, 0.0],
-                           [0.0, 1.0, 0.0, 0.0],
-                           [0.0, 0.0, 1.0, 0.0],
-                           [-17.3712, 48.8013, 12.7259, 1.0]])
-        self.assertEquals(c.values['wormsim.mechanical.VISUALIZATION_TREE.transformation'][0][length-1],
-                          [[0.83888, 0.54409, 0.0157082, 0.0],
-                           [-0.423692, 0.651937, 0.0454791, 0.0],
-                           [0.0186224, -0.0575298, 0.99817, 0.0],
-                           [208.844, 127.149, -23.521, 1.0]])
+        length = len(c.values['wormsim.mechanical.VisualizationTree.transformation'][0])
+        self.assertEquals(c.values['wormsim.mechanical.VisualizationTree.transformation'][0][0], 1.0)
+        self.assertEquals(c.values['wormsim.mechanical.VisualizationTree.transformation'][0][length-2], -23.521)
 
         c.create()
 
